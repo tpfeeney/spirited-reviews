@@ -6,15 +6,9 @@ import seaborn as sns
 st.title("Spirited Stats")
 
 # --- Load data ---
-@st.cache_data
-def load_data():
-    # Replace with your actual data source
-    sheet_id = "1HPjovmE5GFSBUlH-EyZW2ZhteaI22lqqttLrt_ql46k"
-    url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
-    return pd.read_csv(url)
 
-df = load_data()
-
+# Use the shared DataFrame
+df = st.session_state.get("df")
 
 # Sidebar: Properly capitalized options
 raw_names = ['overall', 'randy', 'norm', 'zach', 'justin']

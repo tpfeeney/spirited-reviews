@@ -4,13 +4,9 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 # --- Load data ---
-@st.cache_data
-def load_data():
-    sheet_id = "1HPjovmE5GFSBUlH-EyZW2ZhteaI22lqqttLrt_ql46k"
-    url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
-    return pd.read_csv(url)
+# Use the shared DataFrame
+df = st.session_state.get("df")
 
-df = load_data()
 
 # --- Legacy distillery list ---
 legacy_brands = [
