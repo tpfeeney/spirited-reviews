@@ -19,11 +19,6 @@ def load_data():
     # Format date as "07 July 2025"
     df['date'] = df['date'].dt.strftime('%d %B %Y')
 
-    #  Create a display link column using markdown syntax
-    df['link_display'] = df['link'].apply(
-        lambda url: f"[Open Link]({url})" if pd.notna(url) and url != "" else ""
-    )
-
     return df
 
 # --- Load into session state ---
@@ -38,7 +33,10 @@ st.data_editor(
         "age", "proof", "price", "type", "score", "link_display"
     ],
     column_config={
-        "link_display": st.column_config.LinkColumn("Review Link")
+        "link": st.column_config.LinkColumn(
+            "Review Link", 
+            display_text="Open Review"
+        )
     },
     use_container_width=True,
     hide_index=True
