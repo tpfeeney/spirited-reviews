@@ -29,8 +29,8 @@ if "df" not in st.session_state:
 st.data_editor(
     st.session_state.df,
     column_order=[
-        "date", "brand", "name", "avg", "score", "randy", "norm", "zach", "justin",
-        "age", "proof", "price", "type", "score", "link"  # <--- use raw 'link' column
+        "date","link", "brand", "name", "avg", "score", "randy", "norm", "zach", "justin",
+        "age", "proof", "price", "type", "score"  # <--- use raw 'link' column
     ],
     column_config={
         "link": st.column_config.LinkColumn(
