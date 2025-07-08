@@ -3,3 +3,5 @@ matplotlib
 seaborn
 plotly
 pandas
+datetime
+statsmodels
