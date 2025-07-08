@@ -30,16 +30,16 @@ st.data_editor(
     st.session_state.df,
     column_order=[
         "date", "brand", "name", "avg", "score", "randy", "norm", "zach", "justin",
-        "age", "proof", "price", "type", "score", "link_display"
+        "age", "proof", "price", "type", "score", "link"  # <--- use raw 'link' column
     ],
     column_config={
         "link": st.column_config.LinkColumn(
-            "Review Link", 
-            display_text="Open Review"
+            "Review Link",  # Column title
+            display_text="Open Review"  # Text to display instead of raw URL
         )
     },
-    use_container_width=True,
-    hide_index=True
+    hide_index=True,
+    use_container_width=True
 )
 
 st.image("Scoring_Sheet_Final.jpg", caption="Scoring Key", width=600)
