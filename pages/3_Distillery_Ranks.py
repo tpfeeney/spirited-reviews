@@ -8,7 +8,7 @@ def add_sidebar_logo():
         """
         <style>
             [data-testid="stSidebarNav"] {
-                background-image: url('https://raw.githubusercontent.com/tpfeeney/spirited-reviews/main/srlogo.png');
+                background-image: url('https://github.com/tpfeeney/spirited-reviews/blob/main/srlogo.png?raw=true');
                 background-repeat: no-repeat;
                 background-position: 20px 20px;
                 padding-top: 180px;
