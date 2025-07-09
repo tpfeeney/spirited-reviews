@@ -95,3 +95,5 @@ if percent_input and volume_input:
 
     st.write(f"### Predicted Density at 25°C: {pred_25C:.5f} g/mL")
     st.write(f"### Predicted Mass at 25°C: {mass_25C:.2f} g")
+    
+Reference for Values:  Osborne et al. Density and thremal expansion of ethyl alcohol and of its mixtures with water. Bulletin of the Bureau of Standards, Vol. 9, 327-474 (1913). https://ia800206.us.archive.org/25/items/dens93274741913197197osbo/dens93274741913197197osbo.pdf#page=108.14
