@@ -3,6 +3,24 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 import numpy as np
 
+def add_sidebar_logo():
+    st.markdown(
+        """
+        <style>
+            [data-testid="stSidebarNav"] {
+                background-image: url('https://raw.githubusercontent.com/tpfeeney/spirited-reviews/main/srlogo.png');
+                background-repeat: no-repeat;
+                background-position: 20px 20px;
+                padding-top: 180px;
+                background-size: 150px;
+            }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+add_sidebar_logo()
+
 # Raw data as a string
 data = """
 percent,20C,25C

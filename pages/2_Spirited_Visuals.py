@@ -4,6 +4,24 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.express as px
 
+def add_sidebar_logo():
+    st.markdown(
+        """
+        <style>
+            [data-testid="stSidebarNav"] {
+                background-image: url('https://raw.githubusercontent.com/tpfeeney/spirited-reviews/main/srlogo.png');
+                background-repeat: no-repeat;
+                background-position: 20px 20px;
+                padding-top: 180px;
+                background-size: 150px;
+            }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+add_sidebar_logo()
+
 # --- Load data ---
 df = st.session_state.get("df")
 

@@ -6,3 +6,6 @@ pandas
 datetime
 statsmodels
 scikit-learn
+utils
+Pillow
+numpy

@@ -2,8 +2,55 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
+from PIL import Image
+import numpy as np
 
 st.title("Spirited Reviews")
+
+def score_label(avg):
+    if 0 < avg < 1:
+        return "tainted, WTF?!"
+    elif 1 <= avg < 2:
+        return "Dumpster Fire Adjacent"
+    elif 2 <= avg < 3:
+        return "Tastes Like Regret"
+    elif 3 <= avg < 4:
+        return "Last call material"
+    elif 4 <= avg < 5:
+        return "Questionable Choices"
+    elif 5 <= avg < 6:
+        return "Has Potential..."
+    elif 6 <= avg < 7:
+        return "Weeknight Winner"
+    elif 7 <= avg < 8:
+        return "Shelf-Worthy"
+    elif 8 <= avg < 9:
+        return "Hello There"
+    elif 9 <= avg < 10:
+        return "Legen...Wait For It..Dary!"
+    elif avg >= 10:
+        return "Flawless Victory"
+    else:
+        return np.nan
+        
+def add_sidebar_logo():
+    st.markdown(
+        """
+        <style>
+            [data-testid="stSidebarNav"] {
+                background-image: url('https://raw.githubusercontent.com/tpfeeney/spirited-reviews/main/srlogo.png');
+                background-repeat: no-repeat;
+                background-position: 20px 20px;
+                padding-top: 180px;
+                background-size: 150px;
+            }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+add_sidebar_logo()
+
 
 @st.cache_data(ttl=60)
 def load_data():
@@ -18,6 +65,9 @@ def load_data():
 
     # Format date as "07 July 2025"
     df['date'] = df['date'].dt.strftime('%d %B %Y')
+    
+    #relabel score
+    df['score'] = df['avg'].apply(score_label)
 
     return df
 
