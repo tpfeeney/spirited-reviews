@@ -68,8 +68,6 @@ def load_data():
 
     return df
 
-df=load_data()
-
 # --- Load into session state ---
 if "df" not in st.session_state:
     st.session_state.df = load_data()
