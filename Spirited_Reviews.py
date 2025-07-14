@@ -59,17 +59,16 @@ def load_data():
     df = pd.read_csv(url)
     
     # Parse dates and filter
-    df['date'] = pd.to_datetime(df['date'], errors='coerce')
+    df['date'] = pd.to_datetime(df['date'], errors='coerce')  
     today = pd.Timestamp.today().normalize()
-    df = df[df['date'] <= today - pd.Timedelta(days=3)]
-
-    # Format date as "07 July 2025"
-    df['date'] = df['date'].dt.strftime('%d %B %Y')
+    df = df[df['date'] <= today - pd.Timedelta(days=2)]
     
     #relabel score
     df['score'] = df['avg'].apply(score_label)
 
     return df
+
+df=load_data()
 
 # --- Load into session state ---
 if "df" not in st.session_state:
@@ -79,14 +78,24 @@ if "df" not in st.session_state:
 st.data_editor(
     st.session_state.df,
     column_order=[
-        "date","link", "brand", "name", "avg", "score", "randy", "norm", "zach", "justin",
-        "age", "proof", "price", "type", "score"  # <--- use raw 'link' column
+       "date", "link", "brand", "name", "avg", "score", "randy", "norm", "zach", "justin",
+        "age", "proof", "price", "type"  # <--- use raw 'link' column
     ],
     column_config={
-        "link": st.column_config.LinkColumn(
-            "Review Link",  # Column title
-            display_text="Open Review"  # Text to display instead of raw URL
-        )
+        "date": st.column_config.DateColumn("Date", format="DD MMMM YYYY"),
+        "link": st.column_config.LinkColumn("Video Link", display_text="Open Review"),
+        "brand": st.column_config.TextColumn("Brand"),
+        "name": st.column_config.TextColumn("Whiskey Name"),
+        "avg": st.column_config.NumberColumn("Average Score"),
+        "score": st.column_config.TextColumn("Verdict"),
+        "randy": st.column_config.NumberColumn("Randy"),
+        "norm": st.column_config.NumberColumn("Norm"),
+        "zach": st.column_config.NumberColumn("Zach"),
+        "justin": st.column_config.NumberColumn("Justin"),
+        "age": st.column_config.NumberColumn("Age"),
+        "proof": st.column_config.NumberColumn("Proof"),
+        "price": st.column_config.NumberColumn("Price ($)"),
+        "type": st.column_config.TextColumn("Style"),
     },
     hide_index=True,
     use_container_width=True
