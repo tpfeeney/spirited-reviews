@@ -3,6 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+
+
 def add_sidebar_logo():
     st.markdown(
         """
@@ -20,32 +22,16 @@ def add_sidebar_logo():
     )
     
 add_sidebar_logo()
-
+    
+    
 st.title("Spirited Stats")
 
 # --- Load data ---
+
+# Use the shared DataFrame
 df = st.session_state.get("df")
 
-if df is None or df.empty:
-    st.error("No data found in session_state['df']. Please load data before using the app.")
-    st.stop()
-
-# --- Add 'type' filter radio in sidebar ---
-if 'type' in df.columns and not df['type'].dropna().empty:
-    unique_types = sorted(df['type'].dropna().unique())
-    type_option = st.sidebar.radio("Restrict to Type:", options=["All Types"] + unique_types, index=0)
-else:
-    type_option = "All Types"
-
-# --- Filter dataframe by selected type ---
-if type_option != "All Types":
-    df = df[df['type'] == type_option]
-
-if df.empty:
-    st.warning("No data available for the selected filters.")
-    st.stop()
-
-# Sidebar: Properly capitalized options for reviewers
+# Sidebar: Properly capitalized options
 raw_names = ['overall', 'randy', 'norm', 'zach', 'justin']
 name_options = [name.capitalize() for name in raw_names]
 selected_name = st.sidebar.radio("Select Person", name_options)
@@ -79,21 +65,24 @@ with col3:
 with col4:
     st.metric(label="75% Percentile", value=f"{scores.quantile(0.75):.2f}")
 
-# Prepare long format for boxplot (only reviewers)
+# Prepare long format for boxplot
 df_melted = df.melt(value_vars=['randy', 'norm', 'zach', 'justin'],
                     var_name='Person', value_name='Score')
 df_melted['Person'] = df_melted['Person'].str.capitalize()  # Capitalize labels
 
 # Coloring logic
+# Get all unique people and sort for consistency
 people = sorted(df_melted['Person'].unique())
+
+# Generate pastel color palette and map to people
 palette = sns.color_palette("pastel")
 base_palette_dict = dict(zip(people, palette))
 
 if selected_key == "overall":
-    # Use all pastel colors
+    # Use all original pastel colors
     palette_dict = base_palette_dict
 else:
-    # Highlight selected person, gray others
+    # Highlight selected person using their pastel color, others in gray
     palette_dict = {
         person: base_palette_dict[person] if person == selected_name else 'lightgray'
         for person in people
@@ -103,5 +92,6 @@ else:
 fig, ax = plt.subplots(figsize=(10, 5))
 ax.set_ylim(0, 10)
 sns.boxplot(data=df_melted, x='Person', y='Score', ax=ax, palette=palette_dict)
-ax.set_title(f"Score Distribution by Person — {type_option}")
+ax.set_title("Score Distribution by Person")
+
 st.pyplot(fig)
