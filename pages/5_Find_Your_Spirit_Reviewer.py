@@ -1,11 +1,13 @@
-
 import streamlit as st
 import pandas as pd
 from datetime import datetime, timedelta
 from PIL import Image
 import numpy as np
+import plotly.express as px
 
-st.title("Spirited Reviews")
+st.title("Find your Spirit Reviewer")
+
+st.info("Select observations by checking the boxes above to see how your favorites align with Randy, Norm, Zach and Justin below. This, we hope, will help you find the reviewer most aligned with your palate.")
 
 def score_label(avg):
     if 0 < avg < 1:
@@ -51,7 +53,6 @@ def add_sidebar_logo():
 
 add_sidebar_logo()
 
-
 @st.cache_data(ttl=60)
 def load_data():
     sheet_id = "1HPjovmE5GFSBUlH-EyZW2ZhteaI22lqqttLrt_ql46k"
@@ -63,11 +64,11 @@ def load_data():
     today = pd.Timestamp.today().normalize()
     df = df[df['date'] <= today - pd.Timedelta(days=2)]
     
-     # Compute average score across non-null reviewer columns
+    # Compute average score across non-null reviewer columns
     reviewer_cols = ['randy', 'norm', 'zach', 'justin']
     df['avg'] = df[reviewer_cols].mean(axis=1, skipna=True).round(1)
     
-    #relabel score
+    # Relabel score
     df['score'] = df['avg'].apply(score_label)
 
     return df
@@ -76,14 +77,23 @@ def load_data():
 if "df" not in st.session_state:
     st.session_state.df = load_data()
 
-# --- Display using st.data_editor with link rendering ---
-st.data_editor(
-    st.session_state.df,
+# Copy dataframe to avoid modifying session state directly
+df = st.session_state.df.copy()
+
+# Add "select" column if not present
+if "select" not in df.columns:
+    df["select"] = False
+
+# Display editable data editor with select checkboxes
+edited_df = st.data_editor(
+    df,
     column_order=[
-       "date", "link", "brand", "name", "avg", "score", "randy", "norm", "zach", "justin",
-        "age", "proof", "price", "type"  # <--- use raw 'link' column
+        "select", "date", "link", "brand", "name", "avg", "score",
+        "randy", "norm", "zach", "justin",
+        "age", "proof", "price", "type"
     ],
     column_config={
+        "select": st.column_config.CheckboxColumn("Select"),
         "date": st.column_config.DateColumn("Date", format="DD MMMM YYYY"),
         "link": st.column_config.LinkColumn("Video Link", display_text="Open Review"),
         "brand": st.column_config.TextColumn("Brand"),
@@ -103,4 +113,32 @@ st.data_editor(
     use_container_width=True
 )
 
-st.image("Scoring_Sheet_Final.jpg", caption="Scoring Key", width=600)
+
+selected_rows = edited_df[edited_df["select"]]
+
+if len(selected_rows) == 0:
+    st.info("Select observations by checking the boxes above to see average reviewer scores.")
+elif len(selected_rows) > 10:
+    st.warning("⚠️ Please select no more than 10 observations.")
+else:
+    reviewer_cols = ["randy", "norm", "zach", "justin"]
+    reviewer_avgs = selected_rows[reviewer_cols].mean(skipna=True).round(1)
+
+    st.subheader("Average Reviewer Scores for Selected Observations")
+    st.table(reviewer_avgs.to_frame(name="Average Score"))
+
+    overall_avg = reviewer_avgs.mean().round(2)
+    st.markdown(f"**Overall Average Across All Reviewers:** `{overall_avg}`")
+
+    # Prepare data for box plot
+    box_df = selected_rows[reviewer_cols].melt(var_name="Reviewer", value_name="Score")
+
+    fig = px.box(
+        box_df,
+        x="Reviewer",
+        y="Score",
+        points="all",  # show all points
+        title="Reviewer Score Distribution for Selected Observations",
+        labels={"Score": "Score", "Reviewer": "Reviewer"}
+    )
+    st.plotly_chart(fig, use_container_width=True)

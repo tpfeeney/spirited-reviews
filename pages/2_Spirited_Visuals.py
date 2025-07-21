@@ -61,21 +61,42 @@ st.title("Spirited Visualizations")
 # ---------------------- Chart Logic ----------------------
 
 if chart_type == "Proof Breakdown":
-    fig, ax = plt.subplots(figsize=(10, 6))
-    cat_counts.plot(kind='bar', ax=ax, color='skyblue', edgecolor='black')
-    ax.set_xlabel("Proof Category")
-    ax.set_ylabel("Count")
-    ax.set_title("Number of Observations per Proof Category")
-    ax.set_xticklabels(cat_counts.index, rotation=45, ha='right')
-    st.pyplot(fig)
+    cat_counts = page_df['proof_cat'].value_counts().sort_index()
+    proof_df = cat_counts.reset_index()
+    proof_df.columns = ['Proof Category', 'Count']
+
+    fig = px.bar(
+        proof_df,
+        x='Proof Category',
+        y='Count',
+        title="Number of Observations per Proof Category",
+        labels={'Count': 'Count', 'Proof Category': 'Proof Category'},
+        text='Count',
+        color='Proof Category'
+    )
+
+    fig.update_traces(textposition='outside')
+    fig.update_layout(
+        xaxis_tickangle=-45,
+        showlegend=False,
+        margin=dict(t=60, b=80),
+        height=500
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
 
 elif chart_type == "Type Breakdown":
-    type_counts = page_df['type'].value_counts()
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.pie(type_counts, labels=type_counts.index, autopct='%1.1f%%', startangle=90)
-    ax.axis('equal')  # Make it a circle
-    ax.set_title("Distribution of Whiskey Types")
-    st.pyplot(fig)
+    type_counts = page_df['type'].value_counts().reset_index()
+    type_counts.columns = ['type', 'count']
+    
+    fig = px.pie(
+        type_counts,
+        names='type',
+        values='count',
+        title="Distribution of Whiskey Types"
+    )
+    fig.update_traces(textposition='inside', textinfo='percent+label')
+    st.plotly_chart(fig, use_container_width=True)
 
 elif chart_type == "Price v Review":
     fig = px.scatter(page_df, x="price", y="avg", trendline="ols",
