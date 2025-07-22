@@ -151,8 +151,10 @@ for i, (idx, row) in enumerate(selected_rows.iterrows()):
             "Score": user_score
         })
 
+# Now, **after** the loop, prepare the box plot data
+if len(selected_rows) > 0:
+    reviewer_cols = ["randy", "norm", "zach", "justin"]
 
-    # Prepare data for box plot
     box_df = selected_rows.reset_index()[["name"] + reviewer_cols].melt(
         id_vars=["name"], var_name="Reviewer", value_name="Score"
     )
