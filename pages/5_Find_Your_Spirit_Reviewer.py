@@ -130,15 +130,50 @@ else:
     overall_avg = reviewer_avgs.mean().round(2)
     st.markdown(f"**Overall Average Across All Reviewers:** `{overall_avg}`")
 
+st.markdown("### Your Scores")
+user_scores = []
+
+cols = st.columns(3)  # Create three columns
+for i, (idx, row) in enumerate(selected_rows.iterrows()):
+    col = cols[i % 3]  # Rotate through the 3 columns
+    with col:
+        user_score = st.number_input(
+            label=f"{row['brand']} {row['name']}",
+            min_value=0.0,
+            max_value=10.0,
+            step=0.1,
+            format="%.1f",
+            key=f"user_score_{idx}"
+        )
+        user_scores.append({
+            "name": row["name"],
+            "Reviewer": "you",
+            "Score": user_score
+        })
+
+
     # Prepare data for box plot
-    box_df = selected_rows[reviewer_cols].melt(var_name="Reviewer", value_name="Score")
+    box_df = selected_rows.reset_index()[["name"] + reviewer_cols].melt(
+        id_vars=["name"], var_name="Reviewer", value_name="Score"
+    )
+
+    # Add user scores to the melted DataFrame
+    if user_scores:
+        user_df = pd.DataFrame(user_scores)
+        box_df = pd.concat([box_df, user_df], ignore_index=True)
 
     fig = px.box(
         box_df,
         x="Reviewer",
         y="Score",
-        points="all",  # show all points
+        points="all",
         title="Reviewer Score Distribution for Selected Observations",
-        labels={"Score": "Score", "Reviewer": "Reviewer"}
+        labels={"Score": "Score", "Reviewer": "Reviewer"},
+        custom_data=["name"]
     )
+
+    fig.update_traces(
+        hovertemplate="Reviewer: %{x}<br>Score: %{y}<br>Name: %{customdata[0]}<extra></extra>"
+    )
+
     st.plotly_chart(fig, use_container_width=True)
