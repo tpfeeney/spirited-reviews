@@ -118,8 +118,8 @@ selected_rows = edited_df[edited_df["select"]]
 
 if len(selected_rows) == 0:
     st.info("Select observations by checking the boxes above to see average reviewer scores.")
-elif len(selected_rows) > 10:
-    st.warning("⚠️ Please select no more than 10 observations.")
+elif len(selected_rows) > 20:
+    st.warning("⚠️ Please select no more than 20 observations.")
 else:
     reviewer_cols = ["randy", "norm", "zach", "justin"]
     reviewer_avgs = selected_rows[reviewer_cols].mean(skipna=True).round(1)
