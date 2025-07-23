@@ -7,7 +7,7 @@ import plotly.express as px
 
 st.title("Find your Spirit Reviewer")
 
-st.info("Select observations by checking the boxes above to see how your favorites align with Randy, Norm, Zach and Justin below. This, we hope, will help you find the reviewer most aligned with your palate.")
+st.info("Select observations (up to 10) by checking the boxes and then providing your own reviews below to see how your favorites align with Randy, Norm, Zach and Justin below. This, we hope, will help you find the reviewer most aligned with your palate.")
 
 def score_label(avg):
     if 0 < avg < 1:
@@ -137,11 +137,12 @@ cols = st.columns(3)  # Create three columns
 for i, (idx, row) in enumerate(selected_rows.iterrows()):
     col = cols[i % 3]  # Rotate through the 3 columns
     with col:
-        user_score = st.number_input(
+        user_score = st.slider(
             label=f"{row['brand']} {row['name']}",
             min_value=0.0,
             max_value=10.0,
             step=0.1,
+            value=5.0,  # Default value
             format="%.1f",
             key=f"user_score_{idx}"
         )
