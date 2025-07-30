@@ -28,14 +28,16 @@ df = st.session_state.get("df")
 # Make a copy to avoid modifying shared session state
 page_df = df.copy()
 
+
 # Clean and convert fields just for this page
-page_df['age_new'] = (
-    page_df['age']
-    .astype(str)
-    .str.replace(' Years', '', regex=False)
-    .replace('NAS', pd.NA)
-)
-page_df['age_new'] = pd.to_numeric(page_df['age_new'], errors='coerce')
+if 'age_new' not in page_df.columns:
+    page_df['age_new'] = (
+        page_df['age']
+        .astype(str)
+        .str.replace(' Years', '', regex=False)
+        .replace('NAS', pd.NA)
+    )
+    page_df['age_new'] = pd.to_numeric(page_df['age_new'], errors='coerce')
 
 page_df['price'] = pd.to_numeric(page_df['price'].replace('[\$,]', '', regex=True), errors='coerce')
 page_df['avg'] = pd.to_numeric(page_df['avg'], errors='coerce')
@@ -53,7 +55,7 @@ cat_counts = page_df['proof_cat'].value_counts().sort_index()
 # Sidebar chart selection
 chart_type = st.sidebar.radio(
     "Select chart type:",
-    ["Proof Breakdown", "Type Breakdown", "Price v Review", "Proof v Review", "Age v Review"]
+    ["Proof Breakdown", "Type Breakdown", "Price v Review", "Proof v Review", "Age v Review", "Choose your own adventure"]
 )
 
 st.title("Spirited Visualizations")
@@ -115,4 +117,81 @@ elif chart_type == "Age v Review":
     fig = px.scatter(age_filtered_df, x="age_new", y="avg", trendline="ols",
                      labels={"avg": "Average Rating", "age_new": "Age"},
                      hover_name="name")
+    st.plotly_chart(fig, use_container_width=True)
+    
+
+elif chart_type == "Choose your own adventure":
+    st.sidebar.markdown("### Select X and Y axes")
+
+    all_options = {
+        "avg": "Overall Average",
+        "age_new": "Age",
+        "price": "Price ($)",
+        "proof": "Proof",
+        "randy": "Randy Score",
+        "norm": "Norm Score",
+        "justin": "Justin Score",
+        "zach": "Zach Score"
+    }
+
+    allowed_keys = list(all_options.keys())
+
+    # Default X axis variable
+    default_x = "price"
+    if default_x not in allowed_keys:
+        default_x = allowed_keys[0]
+
+    # Select X axis
+    x_col_key = st.sidebar.selectbox(
+        "X-axis:",
+        options=allowed_keys,
+        index=allowed_keys.index(default_x),
+        format_func=lambda x: all_options[x]
+    )
+
+    # Y axis options exclude the chosen X axis
+    y_options = [k for k in allowed_keys if k != x_col_key]
+
+    # Default Y axis variable is 'avg' if available
+    if "avg" in y_options:
+        default_y = "avg"
+    else:
+        default_y = y_options[0]
+
+    # Select Y axis
+    y_col_key = st.sidebar.selectbox(
+        "Y-axis:",
+        options=y_options,
+        index=y_options.index(default_y),
+        format_func=lambda x: all_options[x]
+    )
+
+    # Sidebar: Choose trendline type
+    trendline_option = st.sidebar.radio(
+        "Add Trendline",
+        options=["None", "OLS", "LOWESS"],
+        index=1  # Default to "OLS"
+    )
+
+    # Map user-friendly names to plotly options
+    trendline_map = {
+        "None": None,
+        "OLS": "ols",
+        "LOWESS": "lowess"
+    }
+
+    # Plotting
+    fig = px.scatter(
+        page_df,
+        x=x_col_key,
+        y=y_col_key,
+        trendline=trendline_map[trendline_option],
+        labels={
+            x_col_key: all_options[x_col_key],
+            y_col_key: all_options[y_col_key]
+        },
+        title=f"{all_options[y_col_key]} vs {all_options[x_col_key]}",
+        hover_name="name"
+    )
+    
     st.plotly_chart(fig, use_container_width=True)
