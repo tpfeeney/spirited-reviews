@@ -1,29 +1,21 @@
 import streamlit as st
 import pandas as pd
+from io import StringIO
 from sklearn.linear_model import LinearRegression
-import numpy as np
-
-def add_sidebar_logo():
-    st.markdown(
-        """
-        <style>
-            [data-testid="stSidebarNav"] {
-                background-image: url('https://github.com/tpfeeney/spirited-reviews/blob/main/srlogo.png?raw=true');
-                background-repeat: no-repeat;
-                background-position: 20px 20px;
-                padding-top: 180px;
-                background-size: 150px;
-            }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+from utils import add_sidebar_logo
 
 add_sidebar_logo()
 
-# Raw data as a string
-data = """
-percent,20C,25C
+st.title("Spirited Tools 🔬")
+
+# ── Alcohol Density Predictor ─────────────────────────────────────────────────
+st.header("Alcohol Density Predictor")
+st.caption(
+    "Enter an alcohol percentage and volume to predict density and mass "
+    "at 20°C and 25°C based on published reference data."
+)
+
+data = """percent,20C,25C
 40,0.93518,0.93148
 41,0.93314,0.92940
 42,0.93107,0.92729
@@ -64,42 +56,46 @@ percent,20C,25C
 77,0.85079,0.84647
 78,0.84835,0.84403
 79,0.84590,0.84158
-80,0.84344,0.83911
-"""
+80,0.84344,0.83911"""
 
-# Load into a DataFrame
-from io import StringIO
-df = pd.read_csv(StringIO(data))
+ref_df = pd.read_csv(StringIO(data))
+X = ref_df[['percent']]
+model_20C = LinearRegression().fit(X, ref_df['20C'])
+model_25C = LinearRegression().fit(X, ref_df['25C'])
 
-# Fit linear regression models
-X = df[['percent']]
-model_20C = LinearRegression().fit(X, df['20C'])
-model_25C = LinearRegression().fit(X, df['25C'])
+col1, col2 = st.columns(2)
+with col1:
+    # FIX: use value=50.0 and check is not None — avoids the falsy 0.0 bug
+    percent_input = st.number_input(
+        "Alcohol Percent (40–80):", min_value=40.0, max_value=80.0,
+        value=50.0, step=0.1
+    )
+with col2:
+    volume_input = st.number_input(
+        "Volume (mL):", min_value=0.0, value=750.0, step=1.0
+    )
 
-# Streamlit UI
-st.title("Alcohol Density Predictor")
-
-percent_input = st.number_input("Enter Alcohol Percent (40 - 80):", min_value=40.0, max_value=80.0, step=0.1)
-volume_input = st.number_input("Enter Volume (in mL):", min_value=0.0, step=1.0)
-
-# Predict on input
-if percent_input and volume_input:
+# FIX: check volume > 0 explicitly rather than relying on truthiness
+if volume_input > 0:
     pred_20C = model_20C.predict([[percent_input]])[0]
     pred_25C = model_25C.predict([[percent_input]])[0]
-    
     mass_20C = pred_20C * volume_input
     mass_25C = pred_25C * volume_input
 
-    st.write(f"### Predicted Density at 20°C: {pred_20C:.5f} g/mL")
-    st.write(f"### Predicted Mass at 20°C: {mass_20C:.2f} g")
+    res1, res2 = st.columns(2)
+    with res1:
+        st.metric("Density at 20°C", f"{pred_20C:.5f} g/mL")
+        st.metric("Mass at 20°C",    f"{mass_20C:.2f} g")
+    with res2:
+        st.metric("Density at 25°C", f"{pred_25C:.5f} g/mL")
+        st.metric("Mass at 25°C",    f"{mass_25C:.2f} g")
+else:
+    st.info("Enter a volume above 0 mL to see results.")
 
-    st.write(f"### Predicted Density at 25°C: {pred_25C:.5f} g/mL")
-    st.write(f"### Predicted Mass at 25°C: {mass_25C:.2f} g")
-    
-st.markdown("""
----
-**Reference:**  
-Osborne et al. *Density and thermal expansion of ethyl alcohol and of its mixtures with water*.  
-Bulletin of the Bureau of Standards, Vol. 9, 327–474 (1913).  
-[Link to PDF (p. 108)](https://ia800206.us.archive.org/25/items/dens93274741913197197osbo/dens93274741913197197osbo.pdf#page=108)
-""")
+st.markdown("---")
+st.markdown(
+    "**Reference:** Osborne et al. *Density and thermal expansion of ethyl alcohol "
+    "and of its mixtures with water*. Bulletin of the Bureau of Standards, Vol. 9, "
+    "327–474 (1913). [PDF (p. 108)](https://ia800206.us.archive.org/25/items/"
+    "dens93274741913197197osbo/dens93274741913197197osbo.pdf#page=108)"
+)

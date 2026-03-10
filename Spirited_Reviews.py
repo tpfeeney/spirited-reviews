@@ -1,106 +1,125 @@
-
 import streamlit as st
 import pandas as pd
-from datetime import datetime, timedelta
-from PIL import Image
 import numpy as np
+from utils import add_sidebar_logo, get_data, REVIEWER_COLS
 
-st.title("Spirited Reviews")
-
-def score_label(avg):
-    if 0 < avg < 1:
-        return "tainted, WTF?!"
-    elif 1 <= avg < 2:
-        return "Dumpster Fire Adjacent"
-    elif 2 <= avg < 3:
-        return "Tastes Like Regret"
-    elif 3 <= avg < 4:
-        return "Last call material"
-    elif 4 <= avg < 5:
-        return "Questionable Choices"
-    elif 5 <= avg < 6:
-        return "Has Potential..."
-    elif 6 <= avg < 7:
-        return "Weeknight Winner"
-    elif 7 <= avg < 8:
-        return "Shelf-Worthy"
-    elif 8 <= avg < 9:
-        return "Hello There"
-    elif 9 <= avg < 10:
-        return "Legen...Wait For It..Dary!"
-    elif avg >= 10:
-        return "Flawless Victory"
-    else:
-        return np.nan
-        
-def add_sidebar_logo():
-    st.markdown(
-        """
-        <style>
-            [data-testid="stSidebarNav"] {
-                background-image: url('https://github.com/tpfeeney/spirited-reviews/blob/main/srlogo.png?raw=true');
-                background-repeat: no-repeat;
-                background-position: 20px 20px;
-                padding-top: 180px;
-                background-size: 150px;
-            }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
+st.set_page_config(
+    page_title="Spirited Reviews",
+    page_icon="🥃",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
 add_sidebar_logo()
 
+st.title("Spirited Reviews 🥃")
 
-@st.cache_data(ttl=60)
-def load_data():
-    sheet_id = "1HPjovmE5GFSBUlH-EyZW2ZhteaI22lqqttLrt_ql46k"
-    url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
-    df = pd.read_csv(url)
-    
-    # Parse dates and filter
-    df['date'] = pd.to_datetime(df['date'], errors='coerce')  
-    today = pd.Timestamp.today().normalize()
-    df = df[df['date'] <= today - pd.Timedelta(days=2)]
-    
-     # Compute average score across non-null reviewer columns
-    reviewer_cols = ['randy', 'norm', 'zach', 'justin']
-    df['avg'] = df[reviewer_cols].mean(axis=1, skipna=True).round(1)
-    
-    #relabel score
-    df['score'] = df['avg'].apply(score_label)
+df = get_data()
 
-    return df
+# ── Sidebar controls ──────────────────────────────────────────────────────────
+if st.sidebar.button("🔄 Refresh Data"):
+    st.cache_data.clear()
+    del st.session_state["df"]
+    st.rerun()
 
-# --- Load into session state ---
-if "df" not in st.session_state:
-    st.session_state.df = load_data()
+theme = st.sidebar.radio("Table theme", ["Dark", "Light"], horizontal=True)
 
-# --- Display using st.data_editor with link rendering ---
-st.data_editor(
-    st.session_state.df,
-    column_order=[
-       "date", "link", "brand", "name", "avg", "score", "randy", "norm", "zach", "justin",
-        "age", "proof", "price", "type"  # <--- use raw 'link' column
-    ],
-    column_config={
-        "date": st.column_config.DateColumn("Date", format="DD MMMM YYYY"),
-        "link": st.column_config.LinkColumn("Video Link", display_text="Open Review"),
-        "brand": st.column_config.TextColumn("Brand"),
-        "name": st.column_config.TextColumn("Whiskey Name"),
-        "avg": st.column_config.NumberColumn("Average Score"),
-        "score": st.column_config.TextColumn("Verdict"),
-        "randy": st.column_config.NumberColumn("Randy"),
-        "norm": st.column_config.NumberColumn("Norm"),
-        "zach": st.column_config.NumberColumn("Zach"),
-        "justin": st.column_config.NumberColumn("Justin"),
-        "age": st.column_config.NumberColumn("Age"),
-        "proof": st.column_config.NumberColumn("Proof"),
-        "price": st.column_config.NumberColumn("Price ($)"),
-        "type": st.column_config.TextColumn("Type"),
-    },
-    hide_index=True,
-    use_container_width=True
+# ── Display table ─────────────────────────────────────────────────────────────
+active_reviewers = [c for c in REVIEWER_COLS if c in df.columns]
+reviewer_display = {c: c.capitalize() for c in active_reviewers}
+
+base_cols  = ["date", "link", "brand", "name", "avg", "score"]
+tail_cols  = ["age", "proof", "price", "type"]
+display_cols = base_cols + active_reviewers + tail_cols
+
+display_df = df[[c for c in display_cols if c in df.columns]].copy()
+display_df["date"] = display_df["date"].dt.strftime("%d %B %Y")
+
+# Rename to display-friendly headers
+rename_map = {
+    "date": "Date", "link": "Video Link", "brand": "Brand",
+    "name": "Whiskey Name", "avg": "Avg Score", "score": "Verdict",
+    "age": "Age", "proof": "Proof", "price": "Price ($)", "type": "Type",
+    **reviewer_display
+}
+display_df.rename(columns=rename_map, inplace=True)
+
+reviewer_display_names = [reviewer_display[c] for c in active_reviewers]
+
+if theme == "Dark":
+    odd_color  = "#1a1a1a"
+    even_color = "#2a2a2a"
+    hover_color = "#3a3020"
+else:
+    odd_color  = "#ffffff"
+    even_color = "#f2efe8"
+    hover_color = "#fdf3dc"
+
+display_df["Avg Score"] = pd.to_numeric(display_df["Avg Score"], errors="coerce")
+for col in reviewer_display_names + ["Proof"]:
+    if col in display_df.columns:
+        display_df[col] = pd.to_numeric(display_df[col], errors="coerce")
+
+# Compute median across active reviewer columns
+display_df["Median Score"] = display_df[reviewer_display_names].median(axis=1, skipna=True).round(1)
+
+# Insert Median Score right after Avg Score
+cols = list(display_df.columns)
+avg_idx = cols.index("Avg Score")
+cols.insert(avg_idx + 1, cols.pop(cols.index("Median Score")))
+display_df = display_df[cols]
+
+# ── Pre-format columns as strings so Streamlit never renders "None" ───────────
+# Numeric score columns → "6.5" or "—"
+for col in reviewer_display_names + ["Avg Score", "Median Score"]:
+    if col in display_df.columns:
+        display_df[col] = display_df[col].apply(
+            lambda x: f"{x:.1f}" if pd.notna(x) and x is not None else "—"
+        )
+
+# Age → "12 yr" or "NAS"
+display_df["Age"] = display_df["Age"].apply(
+    lambda x: f"{float(x):.0f} yr" if pd.notna(x) and x is not None else "NAS"
 )
 
-st.image("Scoring_Sheet_Final.jpg", caption="Scoring Key", width=600)
+# Proof → "117.3" or "—"
+if "Proof" in display_df.columns:
+    display_df["Proof"] = display_df["Proof"].apply(
+        lambda x: f"{x:.1f}" if pd.notna(x) and x is not None else "—"
+    )
+
+# Price → "$45" or "—"
+display_df["Price ($)"] = display_df["Price ($)"].apply(
+    lambda x: f"${float(x):.0f}" if pd.notna(x) and x is not None else "—"
+)
+
+text_color = "#eeeeee" if theme == "Dark" else "#222222"
+
+def color_rows(row):
+    color = odd_color if row.name % 2 == 0 else even_color
+    return [f"background-color: {color}; color: {text_color}"] * len(row)
+
+reviewer_fmt = {}
+
+styled = (
+    display_df.reset_index(drop=True).style
+    .apply(color_rows, axis=1)
+)
+
+st.dataframe(
+    styled,
+    hide_index=True,
+    use_container_width=True,
+    column_config={
+        "Video Link": st.column_config.LinkColumn("Video Link", display_text="▶ Watch"),
+        "Date":       st.column_config.TextColumn("Date"),
+    }
+)
+
+# ── Scoring key ───────────────────────────────────────────────────────────────
+with st.expander("📊 Scoring Key"):
+    st.image(
+        "https://github.com/tpfeeney/spirited-reviews/blob/main/Scoring_Sheet_Final.jpg?raw=true",
+        caption="Spirited Reviews Scoring Guide",
+        width=600
+    )
