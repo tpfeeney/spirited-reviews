@@ -121,36 +121,6 @@ if len(crew) > 2:
     with cols[0]:
         render_person(crew[2])
 
-# ── Regular Visitors ──────────────────────────────────────────────────────────
-st.markdown("---")
-st.subheader("🍶 Regular Visitors")
-st.caption("Friends of the show who pull up a chair more often than not.")
-
-visitors = [
-    {
-        "title": "Tyler Boggs (Boggzilla)",
-        "image_file": "boggs.png",
-        "text": "<div style='font-size:18px;'>More to come.</div>",
-    },
-    {
-        "title": "Josh (S&W)",
-        "image_file": "snw.png",
-        "text": "<div style='font-size:18px;'>More to come.</div>",
-    },
-    {
-        "title": "David Mather (Lord Kogac)",
-        "image_file": "kogac.png",
-        "text": "<div style='font-size:18px;'>More to come.</div>",
-    },
-]
-
-# Render visitors in rows of 3
-visitor_cols = st.columns(3)
-for i, person in enumerate(visitors):
-    with visitor_cols[i]:
-        img_width = 300 if person["image_file"] == "kogac.png" else None
-        render_person(person, img_width=img_width)
-
 # ── Former Spirited Crew ──────────────────────────────────────────────────────
 st.markdown("---")
 st.subheader("🏅 Former Spirited Crew")

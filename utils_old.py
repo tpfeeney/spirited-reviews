@@ -3,11 +3,8 @@ import pandas as pd
 import numpy as np
 
 # ── Single source of truth for reviewer columns ───────────────────────────────
-# Core crew — shown on main stats, visuals, and find-your-reviewer pages
-REVIEWER_COLS = ['randy', 'norm', 'zach', 'justin']
-
-# Guest reviewers — shown only on the Spirited Guests page
-GUEST_COLS = ['josh', 'nathan', 'bogzilla', 'chrisj', 'david']
+# Add new reviewers here and every page updates automatically
+REVIEWER_COLS = ['randy', 'norm', 'zach', 'justin', 'josh', 'nathan', 'bogzilla', 'chrisj', 'david']
 
 
 def add_sidebar_logo():
