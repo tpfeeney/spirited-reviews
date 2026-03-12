@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-from utils import add_sidebar_logo, get_data
+from utils import add_sidebar_logo, get_data, REVIEWER_COLS
 
 add_sidebar_logo()
 
@@ -31,7 +31,7 @@ distillery_option = st.sidebar.radio("Select Distillery Type:", ("All", "Legacy 
 unique_types = sorted(df['type'].dropna().unique())
 type_option = st.sidebar.radio("Restrict to Type:", options=["All Types"] + list(unique_types), index=0)
 
-reviewers = ['randy', 'norm', 'zach', 'justin']
+reviewers = [c for c in REVIEWER_COLS if c in df.columns]
 selected_reviewers = []
 
 st.sidebar.markdown("### Select Reviewers (including Overall)")
