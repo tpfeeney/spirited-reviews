@@ -4,10 +4,10 @@ import numpy as np
 
 # ── Single source of truth for reviewer columns ───────────────────────────────
 # Core crew — shown on main stats, visuals, and find-your-reviewer pages
-REVIEWER_COLS = ['randy', 'norm', 'zach', 'justin']
+REVIEWER_COLS = ['randy', 'norm', 'zach']
 
 # Guest reviewers — shown only on the Spirited Guests page
-GUEST_COLS = ['josh', 'nathan', 'bogzilla', 'chrisj', 'david']
+GUEST_COLS = ['josh', 'nathan', 'bogzilla', 'chrisj', 'david' , 'justin']
 
 
 def add_sidebar_logo():
