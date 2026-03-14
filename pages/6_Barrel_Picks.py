@@ -9,7 +9,7 @@ st.caption("Our hand-selected single barrel picks — past and future.")
 # ── Page toggle (right-aligned using columns) ─────────────────────────────────
 _, toggle_col = st.columns([3, 1])
 with toggle_col:
-    view = st.radio("", ["Previous Picks", "Upcoming Picks"], horizontal=False, label_visibility="collapsed")
+    view = st.radio("", ["Upcoming Picks", "Previous Picks" ], index=0, horizontal=False, label_visibility="collapsed")
 
 st.markdown("---")
 
@@ -19,7 +19,9 @@ previous_picks = [
     {
         "name": "Short Barrel Spirited x Collection",
         "brand": "Shortbarrel Bourbon",
-        "date": "",
+        "status": "Released",
+        "pick_date": "",
+        "release_date": "",
         "image_file": "shortb.jpg",
         "description": "",
         "proof": "138.2",
@@ -35,7 +37,9 @@ previous_picks = [
     {
         "name": "Backbone Stogiestastic Batch",
         "brand": "",
-        "date": "",
+        "status": "Released",
+        "pick_date": "",
+        "release_date": "",
         "image_file": "stogie.jpeg",
         "description": "",
         "proof": "",
@@ -51,7 +55,9 @@ previous_picks = [
     {
         "name": "Backbone Irish Kelvin",
         "brand": "",
-        "date": "",
+        "status": "Released",
+        "pick_date": "",
+        "release_date": "",
         "image_file": "irishkelvin.jpg",
         "description": "",
         "proof": "",
@@ -67,13 +73,15 @@ previous_picks = [
     {
         "name": "Founding Spirit",
         "brand": "",
-        "date": "",
+        "status": "Released",
+        "pick_date": "",
+        "release_date": "",
         "image_file": "pick_founding_spirit.png",
         "description": "",
         "proof": "",
         "age": "",
         "location": "",
-        "distillate_info": "",
+        "distillate_info": "MGP",
         "pick_team": "",
         "nose": "",
         "palate": "",
@@ -86,7 +94,9 @@ upcoming_picks = [
     # {
     #     "name": "Four Roses Single Barrel OBSV",
     #     "brand": "Four Roses",
-    #     "date": "Coming Spring 2025",
+    #     "status": "Pending Release",   # e.g. "Selected", "In Production", "Pending Release"
+    #     "pick_date": "January 2025",
+    #     "release_date": "Coming Spring 2025",
     #     "image_file": "pick_four_roses.png",
     #     "description": "",
     #     "proof": "",
@@ -99,6 +109,25 @@ upcoming_picks = [
     #     "mouthfeel": "",
     #     "finish": "",
     # },
+    {
+        "name": "Peerless Rye",
+        "brand": "Peerless",
+        "status": "Picked",   # e.g. "Selected", "In Production", "Pending Release"
+        "pick_date": "Mar 6 2025",
+        "release_date": "TBD",
+        "image_file": "",
+        "description": "",
+        "proof": "",
+        "age": "",
+        "location": "",
+        "distillate_info": "",
+        "pick_team": "Randy, Norm, Zach, Boggzilla",
+        "nose": "",
+        "palate": "",
+        "mouthfeel": "",
+        "finish": "",
+    },
+
 ]
 
 # ── Image loader ──────────────────────────────────────────────────────────────
@@ -125,7 +154,7 @@ def load_image(filename):
 # ── Render a single pick card ─────────────────────────────────────────────────
 def render_pick(pick):
     st.markdown(f"### {pick['name']}")
-    st.caption(f"{pick['brand']}  ·  {pick['date']}")
+    st.caption(f"{pick['brand']}")
 
     img_col, info_col = st.columns([1, 2])
 
@@ -143,10 +172,36 @@ def render_pick(pick):
 
     with info_col:
 
+        # ── Status / Dates ────────────────────────────────────────────────────
+        status       = pick.get("status", "")
+        pick_date    = pick.get("pick_date", "")
+        release_date = pick.get("release_date", "")
+
+        if any([status, pick_date, release_date]):
+            st.markdown("#### 📋 Pick Info")
+            date_cols = st.columns(3)
+            with date_cols[0]:
+                if status:
+                    status_color = (
+                        "#4caf50" if status.lower() == "released"
+                        else "#ff9800" if "production" in status.lower()
+                        else "#2196f3"
+                    )
+                    st.markdown(
+                        f"**Status:** <span style='color:{status_color};font-weight:bold;'>{status}</span>",
+                        unsafe_allow_html=True
+                    )
+            with date_cols[1]:
+                if pick_date:
+                    st.markdown(f"**🗓️ Pick Date:** {pick_date}")
+            with date_cols[2]:
+                if release_date:
+                    st.markdown(f"**🚀 Release Date:** {release_date}")
+
         # ── Barrel Details ────────────────────────────────────────────────────
-        proof          = pick.get("proof", "")
-        age            = pick.get("age", "")
-        location       = pick.get("location", "")
+        proof           = pick.get("proof", "")
+        age             = pick.get("age", "")
+        location        = pick.get("location", "")
         distillate_info = pick.get("distillate_info", "")
 
         if any([proof, age, location, distillate_info]):
