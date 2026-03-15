@@ -139,29 +139,29 @@ if len(crew) > 2:
         render_person(crew[2], df=df)
 
 # ── Former Spirited Crew ──────────────────────────────────────────────────────
-st.markdown("---")
-st.subheader("🏅 Former Spirited Crew")
-st.caption("Always a part of the story.")
+# st.markdown("---")
+# st.subheader("🏅 Former Spirited Crew")
+# st.caption("Always a part of the story.")
 
-former = [
-    {
-        "title": "Justin (Justin)",
-        "image_file": "Justin.png",
-        "reviewer_key": None,
-        "bio": """Collector of old flowers, Four Roses lover, and firm believer that rye whiskey
-is proof chaos can be distilled into something beautiful. Proud father of two daughters,
-husband of seven years. Finds meaning in good conversation, sharing unique bottles,
-and chasing the stories that live between the sips.<br><br>""",
-        "static_top5": """<div style='font-size:18px;'><u><b>5 Favorite Pours:</b></u><br>
-1) Booker's Rye<br>
-2) Watch Hill Proper 20 Batch 2<br>
-3) Russell's Reserve 15<br>
-4) Parker's Heritage Double Barrel Blend<br>
-5) Four Roses Father's Day 2024 16 Year OESV</div>""",
-        "footer": "<div style='font-size:18px;'><br><u><b>Top 2 Favorite Spirits:</b></u><br>Bourbon / Rye</div>",
-    },
-]
+# former = [
+#     {
+#         "title": "Justin (Justin)",
+#         "image_file": "Justin.png",
+#         "reviewer_key": None,
+#         "bio": """Collector of old flowers, Four Roses lover, and firm believer that rye whiskey
+# is proof chaos can be distilled into something beautiful. Proud father of two daughters,
+# husband of seven years. Finds meaning in good conversation, sharing unique bottles,
+# and chasing the stories that live between the sips.<br><br>""",
+#         "static_top5": """<div style='font-size:18px;'><u><b>5 Favorite Pours:</b></u><br>
+# 1) Booker's Rye<br>
+# 2) Watch Hill Proper 20 Batch 2<br>
+# 3) Russell's Reserve 15<br>
+# 4) Parker's Heritage Double Barrel Blend<br>
+# 5) Four Roses Father's Day 2024 16 Year OESV</div>""",
+#         "footer": "<div style='font-size:18px;'><br><u><b>Top 2 Favorite Spirits:</b></u><br>Bourbon / Rye</div>",
+#     },
+# ]
 
-former_cols = st.columns(2)
-with former_cols[0]:
-    render_person(former[0])
+# former_cols = st.columns(2)
+# with former_cols[0]:
+#     render_person(former[0])
