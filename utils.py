@@ -7,7 +7,7 @@ import numpy as np
 REVIEWER_COLS = ['randy', 'norm', 'zach']
 
 # Guest reviewers — shown only on the Spirited Guests page
-GUEST_COLS = ['josh', 'nathan', 'bogzilla', 'chrisj', 'david' , 'justin']
+GUEST_COLS = ['josh', 'nathan', 'bogzilla', 'chrisj', 'david' , 'justin', 'tim']
 
 
 def add_sidebar_logo():
