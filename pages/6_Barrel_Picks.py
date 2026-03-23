@@ -19,7 +19,7 @@ previous_picks = [
     {
         "name": "Short Barrel Spirited x Collection",
         "brand": "Shortbarrel Bourbon",
-        "status": "Released",
+        "status": "SOLD OUT",
         "pick_date": "",
         "release_date": "",
         "image_file": "shortb.jpg",
@@ -37,18 +37,11 @@ previous_picks = [
     {
         "name": "Backbone Stogiestastic Batch",
         "brand": "",
-        "status": "Released",
+        "status": "SOLD OUT",
         "pick_date": "",
         "release_date": "",
         "image_file": "stogie.jpeg",
-        "description": "Aged 72 months in kelvin barrel
-Bourbon Fusion:
-Micro-blend of 4 different barrels - Feb24 (all 21% rye)
-bbl#1 - Straight bourbon; original barrel date Oct18
-bbl# 2 - Bourbon finished in Amaro (24 months)
-bbl# 3 - Bourbon finished in Cognac (15 months)
-bbl# 4 - Bourbon finished in Apera (15 months)
-(note: Apera is Australian sherry - similar to PX)",
+        "description": "Aged 72 months in kelvin barrel\nBourbon Fusion:  \n Micro-blend of 4 different barrels - Feb24 (all 21% rye)  \n bbl#1 - Straight bourbon; original barrel date Oct18. \n bbl# 2 - Bourbon finished in Amaro (24 months)  \n bbl# 3 - Bourbon finished in Cognac (15 months)  \n bbl# 4 - Bourbon finished in Apera (15 months)  \n(note: Apera is Australian sherry - similar to PX)",
         "proof": "120",
         "age": "",
         "location": "",
@@ -62,7 +55,7 @@ bbl# 4 - Bourbon finished in Apera (15 months)
     {
         "name": "Backbone Irish Kelvin",
         "brand": "",
-        "status": "Released",
+        "status": "SOLD OUT",
         "pick_date": "",
         "release_date": "",
         "image_file": "irishkelvin.jpg",
@@ -80,7 +73,7 @@ bbl# 4 - Bourbon finished in Apera (15 months)
     {
         "name": "Founding Spirit",
         "brand": "",
-        "status": "Released",
+        "status": "SOLD OUT",
         "pick_date": "",
         "release_date": "",
         "image_file": "pick_founding_spirit.png",
