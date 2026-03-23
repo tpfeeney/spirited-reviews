@@ -65,18 +65,18 @@ model_25C = LinearRegression().fit(X, ref_df['25C'])
 
 col1, col2 = st.columns(2)
 with col1:
-    # FIX: use value=50.0 and check is not None — avoids the falsy 0.0 bug
     percent_input = st.number_input(
         "Alcohol Percent (40–80):", min_value=40.0, max_value=80.0,
-        value=50.0, step=0.1
+        value=None, step=0.1, format="%.2f", placeholder="50.00"
     )
 with col2:
     volume_input = st.number_input(
-        "Volume (mL):", min_value=0.0, value=750.0, step=1.0
+        "Volume (mL):", min_value=0.0, value=None, step=1.0, format="%.2f",
+        placeholder="750.00"
     )
 
-# FIX: check volume > 0 explicitly rather than relying on truthiness
-if volume_input > 0:
+# treat None as 0 for the guard check; only compute when both are filled
+if percent_input is not None and (volume_input or 0.0) > 0:
     pred_20C = model_20C.predict([[percent_input]])[0]
     pred_25C = model_25C.predict([[percent_input]])[0]
     mass_20C = pred_20C * volume_input
@@ -90,7 +90,7 @@ if volume_input > 0:
         st.metric("Density at 25°C", f"{pred_25C:.5f} g/mL")
         st.metric("Mass at 25°C",    f"{mass_25C:.2f} g")
 else:
-    st.info("Enter a volume above 0 mL to see results.")
+    st.info("Enter an alcohol percentage and a volume above 0 mL to see results.")
 
 st.markdown("---")
 st.markdown(
@@ -99,3 +99,160 @@ st.markdown(
     "327–474 (1913). [PDF (p. 108)](https://ia800206.us.archive.org/25/items/"
     "dens93274741913197197osbo/dens93274741913197197osbo.pdf#page=108)"
 )
+
+st.markdown("---")
+
+# ── Mash Bill Calculator ──────────────────────────────────────────────────────
+st.header("Mash Bill Calculator")
+st.caption(
+    "Enter a percentage weight for each grain source per row. "
+    "The weighted average for each grain column is calculated across all rows "
+    "using the Blend % as the weight."
+)
+
+STANDARD_GRAINS = ["Corn", "Wheat", "Rye", "Malted Barley", "Malted Rye"]
+
+# ── Session state initialisation ──────────────────────────────────────────────
+if "mash_rows" not in st.session_state:
+    st.session_state.mash_rows = [
+        {"label": "Mash 1", "pct": None, "grains": {g: None for g in STANDARD_GRAINS}, "custom": []},
+        {"label": "Mash 2", "pct": None, "grains": {g: None for g in STANDARD_GRAINS}, "custom": []},
+    ]
+
+if "custom_grain_names" not in st.session_state:
+    st.session_state.custom_grain_names = []
+
+if "_adding_grain" not in st.session_state:
+    st.session_state._adding_grain = False
+
+# ── Controls: add row / add custom grain column ───────────────────────────────
+ctrl_col1, ctrl_col2, _ = st.columns([1.5, 1.8, 4])
+with ctrl_col1:
+    if st.button("➕ Add Mash Row"):
+        idx = len(st.session_state.mash_rows) + 1
+        st.session_state.mash_rows.append({
+            "label": f"Mash {idx}",
+            "pct": None,
+            "grains": {g: None for g in STANDARD_GRAINS},
+            "custom": [None] * len(st.session_state.custom_grain_names),
+        })
+        st.rerun()
+
+with ctrl_col2:
+    if st.button("➕ Add Grain Column"):
+        st.session_state._adding_grain = True
+
+if st.session_state._adding_grain:
+    grain_input_col, grain_btn_col = st.columns([3, 1])
+    with grain_input_col:
+        new_grain_name = st.text_input("New grain name:", key="new_grain_input",
+                                        placeholder="e.g. Oats, Spelt…")
+    with grain_btn_col:
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("Confirm"):
+            name = new_grain_name.strip()
+            if name and name not in STANDARD_GRAINS and name not in st.session_state.custom_grain_names:
+                st.session_state.custom_grain_names.append(name)
+                for row in st.session_state.mash_rows:
+                    row["custom"].append(None)
+            st.session_state._adding_grain = False
+            st.rerun()
+
+all_grain_cols = STANDARD_GRAINS + st.session_state.custom_grain_names
+
+# ── Column layout proportions ─────────────────────────────────────────────────
+col_widths = [1.4, 0.8] + [1.0] * len(all_grain_cols) + [0.4]
+
+# ── Header row ────────────────────────────────────────────────────────────────
+header_cols = st.columns(col_widths)
+header_cols[0].markdown("**Mash Label**")
+header_cols[1].markdown("**Blend %**")
+for i, g in enumerate(all_grain_cols):
+    header_cols[2 + i].markdown(f"**{g} %**")
+header_cols[-1].markdown("")
+
+# ── Data rows ─────────────────────────────────────────────────────────────────
+rows_to_delete = []
+
+for r_idx, row in enumerate(st.session_state.mash_rows):
+    row_cols = st.columns(col_widths)
+
+    row["label"] = row_cols[0].text_input(
+        "Label", value=row["label"], key=f"label_{r_idx}", label_visibility="collapsed"
+    )
+    row["pct"] = row_cols[1].number_input(
+        "Blend %", min_value=0.0, max_value=100.0, value=row["pct"],
+        step=0.1, format="%.1f", key=f"pct_{r_idx}", label_visibility="collapsed",
+        placeholder="0.0"
+    )
+    for g_idx, grain in enumerate(STANDARD_GRAINS):
+        row["grains"][grain] = row_cols[2 + g_idx].number_input(
+            grain, min_value=0.0, max_value=100.0,
+            value=row["grains"].get(grain),
+            step=0.1, format="%.1f", key=f"grain_{r_idx}_{g_idx}", label_visibility="collapsed",
+            placeholder="0.0"
+        )
+    for c_idx, cname in enumerate(st.session_state.custom_grain_names):
+        abs_idx = len(STANDARD_GRAINS) + c_idx
+        while len(row["custom"]) <= c_idx:
+            row["custom"].append(None)
+        row["custom"][c_idx] = row_cols[2 + abs_idx].number_input(
+            cname, min_value=0.0, max_value=100.0,
+            value=row["custom"][c_idx],
+            step=0.1, format="%.1f", key=f"custom_{r_idx}_{c_idx}", label_visibility="collapsed",
+            placeholder="0.0"
+        )
+    if len(st.session_state.mash_rows) > 1:
+        if row_cols[-1].button("🗑️", key=f"del_{r_idx}", help="Remove this row"):
+            rows_to_delete.append(r_idx)
+
+for idx in reversed(rows_to_delete):
+    st.session_state.mash_rows.pop(idx)
+if rows_to_delete:
+    st.rerun()
+
+# ── Weighted output ───────────────────────────────────────────────────────────
+st.markdown("#### Weighted Mash Bill")
+
+total_pct = sum((r["pct"] or 0.0) for r in st.session_state.mash_rows)
+
+if total_pct <= 0:
+    st.warning("Enter blend percentages that sum to a positive value to see weighted results.")
+else:
+    if abs(total_pct - 100.0) > 0.05:
+        st.warning(
+            f"Blend percentages sum to **{total_pct:.1f}%** — "
+            "results are normalised to 100% for the weighted calculation."
+        )
+
+    weighted = {}
+    for grain in all_grain_cols:
+        total = 0.0
+        for row in st.session_state.mash_rows:
+            w = (row["pct"] or 0.0) / total_pct
+            if grain in STANDARD_GRAINS:
+                val = row["grains"].get(grain) or 0.0
+            else:
+                c_idx = st.session_state.custom_grain_names.index(grain)
+                val = (row["custom"][c_idx] if c_idx < len(row["custom"]) else None) or 0.0
+            total += w * val
+        weighted[grain] = total
+
+    result_cols = st.columns(len(all_grain_cols))
+    for i, grain in enumerate(all_grain_cols):
+        result_cols[i].metric(label=grain, value=f"{weighted[grain]:.1f}%")
+
+    with st.expander("Full breakdown table"):
+        table_data = []
+        for row in st.session_state.mash_rows:
+            entry = {"Mash": row["label"], "Blend %": row["pct"] or 0.0}
+            for grain in STANDARD_GRAINS:
+                entry[grain] = row["grains"].get(grain) or 0.0
+            for c_idx, cname in enumerate(st.session_state.custom_grain_names):
+                entry[cname] = (row["custom"][c_idx] if c_idx < len(row["custom"]) else None) or 0.0
+            table_data.append(entry)
+        totals = {"Mash": "Weighted Total", "Blend %": round(total_pct, 1)}
+        for grain in all_grain_cols:
+            totals[grain] = round(weighted[grain], 1)
+        table_data.append(totals)
+        st.dataframe(pd.DataFrame(table_data), use_container_width=True, hide_index=True)
