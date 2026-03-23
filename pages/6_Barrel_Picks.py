@@ -41,8 +41,15 @@ previous_picks = [
         "pick_date": "",
         "release_date": "",
         "image_file": "stogie.jpeg",
-        "description": "",
-        "proof": "",
+        "description": "Aged 72 months in kelvin barrel
+Bourbon Fusion:
+Micro-blend of 4 different barrels - Feb24 (all 21% rye)
+bbl#1 - Straight bourbon; original barrel date Oct18
+bbl# 2 - Bourbon finished in Amaro (24 months)
+bbl# 3 - Bourbon finished in Cognac (15 months)
+bbl# 4 - Bourbon finished in Apera (15 months)
+(note: Apera is Australian sherry - similar to PX)",
+        "proof": "120",
         "age": "",
         "location": "",
         "distillate_info": "",
@@ -60,7 +67,7 @@ previous_picks = [
         "release_date": "",
         "image_file": "irishkelvin.jpg",
         "description": "",
-        "proof": "",
+        "proof": "120.9",
         "age": "7.6 years",
         "location": "",
         "distillate_info": "",
