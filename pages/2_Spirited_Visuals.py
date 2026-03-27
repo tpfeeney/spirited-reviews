@@ -3,6 +3,103 @@ import pandas as pd
 import plotly.express as px
 from utils import add_sidebar_logo, get_data, REVIEWER_COLS
 
+st.set_page_config(
+    page_title="Spirited Visuals",
+    page_icon="📈",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+import streamlit as st
+
+# ── Spirited Style ─────────────────────────────────────────────────────────────
+st.markdown("""
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@300;400;600&display=swap');
+
+  html, body, [class*="css"] { font-family: 'Source Sans 3', sans-serif; }
+  h1, h2, h3, h4 { font-family: 'Playfair Display', serif; }
+
+  .stApp {
+      background: linear-gradient(135deg, #1a0a00 0%, #2d1400 50%, #1a0a00 100%);
+      color: #f5e6d3;
+  }
+  [data-testid="stSidebar"] {
+      background: linear-gradient(180deg, #120600 0%, #1f0c00 100%) !important;
+      border-right: 1px solid rgba(200,100,10,0.25);
+  }
+  [data-testid="stSidebar"] label,
+  [data-testid="stSidebar"] .stRadio label,
+  [data-testid="stSidebar"] .stCheckbox label {
+      color: #f0d5b0 !important;
+      font-size: 0.95rem !important;
+  }
+  [data-testid="stSidebar"] .stMarkdown,
+  [data-testid="stSidebar"] p,
+  [data-testid="stSidebar"] span {
+      color: #f0d5b0 !important;
+  }
+  [data-testid="stSidebar"] h1,
+  [data-testid="stSidebar"] h2,
+  [data-testid="stSidebar"] h3 {
+      color: #ffd699 !important;
+  }
+  label, .stSelectbox label, .stNumberInput label, .stSlider label,
+  .stRadio label, .stCheckbox label, .stMultiSelect label {
+      color: #f0d5b0 !important;
+      font-size: 0.9rem !important;
+  }
+  p, li, span, div { color: #f5e6d3; }
+  .stNumberInput input, .stTextInput input, .stTextArea textarea {
+      background: rgba(255,220,160,0.07) !important;
+      border: 1px solid rgba(200,100,10,0.35) !important;
+      color: #ffd699 !important;
+      border-radius: 6px !important;
+  }
+  .stSelectbox > div > div, .stMultiSelect > div > div {
+      background: rgba(255,220,160,0.07) !important;
+      border: 1px solid rgba(200,100,10,0.35) !important;
+      color: #ffd699 !important;
+  }
+  .stButton > button {
+      background: linear-gradient(90deg, #7a3e00, #c8640a) !important;
+      color: #fff8ef !important;
+      border: none !important;
+      border-radius: 8px !important;
+      font-family: 'Playfair Display', serif !important;
+      font-size: 1rem !important;
+      padding: 9px 28px !important;
+      letter-spacing: 0.5px;
+      transition: opacity 0.2s;
+  }
+  .stButton > button:hover { opacity: 0.88 !important; }
+  /* Metrics */
+  [data-testid="stMetric"] {
+      background: linear-gradient(135deg, rgba(200,100,10,0.12), rgba(120,60,0,0.18));
+      border: 1px solid rgba(200,100,10,0.3);
+      border-radius: 10px;
+      padding: 12px 16px;
+  }
+  [data-testid="stMetricLabel"] { color: #d4956a !important; font-size: 0.8rem !important; }
+  [data-testid="stMetricValue"] { color: #ffd699 !important; font-family: 'Playfair Display', serif !important; }
+  /* Dataframes */
+  [data-testid="stDataFrame"] { border: 1px solid rgba(200,100,10,0.2) !important; border-radius: 8px; }
+  /* Expander */
+  .streamlit-expanderHeader {
+      background: rgba(255,220,160,0.06) !important;
+      border: 1px solid rgba(200,100,10,0.2) !important;
+      border-radius: 8px !important;
+      color: #f5a944 !important;
+  }
+  /* Info / warning / error boxes */
+  .stAlert { border-radius: 8px !important; }
+  hr { border-color: rgba(200,100,10,0.2) !important; }
+  #MainMenu { visibility: hidden; }
+  footer { visibility: hidden; }
+</style>
+""", unsafe_allow_html=True)
+
+
 add_sidebar_logo()
 
 st.title("Spirited Visualizations")
@@ -46,6 +143,15 @@ if chart_type == "Proof Breakdown":
     fig.update_traces(textposition='outside')
     fig.update_layout(xaxis_tickangle=-45, showlegend=False,
                       margin=dict(t=60, b=80), height=500)
+    fig.update_layout(
+        paper_bgcolor='#1a0a00',
+        plot_bgcolor='#2d1400',
+        font=dict(color='#f5e6d3', family='Source Sans 3'),
+        title_font=dict(color='#ffd699', family='Playfair Display'),
+        xaxis=dict(gridcolor='#3a1800', linecolor='#7a3e00', tickcolor='#f0d5b0'),
+        yaxis=dict(gridcolor='#3a1800', linecolor='#7a3e00', tickcolor='#f0d5b0'),
+        legend=dict(bgcolor='rgba(45,20,0,0.8)', bordercolor='#7a3e00', borderwidth=1),
+    )
     st.plotly_chart(fig, use_container_width=True)
 
 elif chart_type == "Type Breakdown":
@@ -54,18 +160,45 @@ elif chart_type == "Type Breakdown":
     fig = px.pie(type_counts, names='type', values='count',
                  title="Distribution of Whiskey Types")
     fig.update_traces(textposition='inside', textinfo='percent+label')
+    fig.update_layout(
+        paper_bgcolor='#1a0a00',
+        plot_bgcolor='#2d1400',
+        font=dict(color='#f5e6d3', family='Source Sans 3'),
+        title_font=dict(color='#ffd699', family='Playfair Display'),
+        xaxis=dict(gridcolor='#3a1800', linecolor='#7a3e00', tickcolor='#f0d5b0'),
+        yaxis=dict(gridcolor='#3a1800', linecolor='#7a3e00', tickcolor='#f0d5b0'),
+        legend=dict(bgcolor='rgba(45,20,0,0.8)', bordercolor='#7a3e00', borderwidth=1),
+    )
     st.plotly_chart(fig, use_container_width=True)
 
 elif chart_type == "Price v Review":
     fig = px.scatter(page_df, x="price", y="avg", trendline="ols",
                      labels={"avg": "Average Rating", "price": "Price ($)"},
                      hover_name="name")
+    fig.update_layout(
+        paper_bgcolor='#1a0a00',
+        plot_bgcolor='#2d1400',
+        font=dict(color='#f5e6d3', family='Source Sans 3'),
+        title_font=dict(color='#ffd699', family='Playfair Display'),
+        xaxis=dict(gridcolor='#3a1800', linecolor='#7a3e00', tickcolor='#f0d5b0'),
+        yaxis=dict(gridcolor='#3a1800', linecolor='#7a3e00', tickcolor='#f0d5b0'),
+        legend=dict(bgcolor='rgba(45,20,0,0.8)', bordercolor='#7a3e00', borderwidth=1),
+    )
     st.plotly_chart(fig, use_container_width=True)
 
 elif chart_type == "Proof v Review":
     fig = px.scatter(page_df, x="proof", y="avg", trendline="ols",
                      labels={"avg": "Average Rating", "proof": "Proof"},
                      hover_name="name")
+    fig.update_layout(
+        paper_bgcolor='#1a0a00',
+        plot_bgcolor='#2d1400',
+        font=dict(color='#f5e6d3', family='Source Sans 3'),
+        title_font=dict(color='#ffd699', family='Playfair Display'),
+        xaxis=dict(gridcolor='#3a1800', linecolor='#7a3e00', tickcolor='#f0d5b0'),
+        yaxis=dict(gridcolor='#3a1800', linecolor='#7a3e00', tickcolor='#f0d5b0'),
+        legend=dict(bgcolor='rgba(45,20,0,0.8)', bordercolor='#7a3e00', borderwidth=1),
+    )
     st.plotly_chart(fig, use_container_width=True)
 
 elif chart_type == "Age v Review":
@@ -73,6 +206,15 @@ elif chart_type == "Age v Review":
     fig = px.scatter(age_df, x="age_new", y="avg", trendline="ols",
                      labels={"avg": "Average Rating", "age_new": "Age"},
                      hover_name="name")
+    fig.update_layout(
+        paper_bgcolor='#1a0a00',
+        plot_bgcolor='#2d1400',
+        font=dict(color='#f5e6d3', family='Source Sans 3'),
+        title_font=dict(color='#ffd699', family='Playfair Display'),
+        xaxis=dict(gridcolor='#3a1800', linecolor='#7a3e00', tickcolor='#f0d5b0'),
+        yaxis=dict(gridcolor='#3a1800', linecolor='#7a3e00', tickcolor='#f0d5b0'),
+        legend=dict(bgcolor='rgba(45,20,0,0.8)', bordercolor='#7a3e00', borderwidth=1),
+    )
     st.plotly_chart(fig, use_container_width=True)
 
 elif chart_type == "Choose your own adventure":
@@ -109,5 +251,14 @@ elif chart_type == "Choose your own adventure":
         labels={x_col_key: all_options[x_col_key], y_col_key: all_options[y_col_key]},
         title=f"{all_options[y_col_key]} vs {all_options[x_col_key]}",
         hover_name="name"
+    )
+    fig.update_layout(
+        paper_bgcolor='#1a0a00',
+        plot_bgcolor='#2d1400',
+        font=dict(color='#f5e6d3', family='Source Sans 3'),
+        title_font=dict(color='#ffd699', family='Playfair Display'),
+        xaxis=dict(gridcolor='#3a1800', linecolor='#7a3e00', tickcolor='#f0d5b0'),
+        yaxis=dict(gridcolor='#3a1800', linecolor='#7a3e00', tickcolor='#f0d5b0'),
+        legend=dict(bgcolor='rgba(45,20,0,0.8)', bordercolor='#7a3e00', borderwidth=1),
     )
     st.plotly_chart(fig, use_container_width=True)
