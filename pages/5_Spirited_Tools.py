@@ -337,7 +337,7 @@ if tool == "🔀 Split Calculator":
     materials = (3.50 * num_named) if materials_fee else 0.0
 
     if samp_per_person > 0:
-        per_sample_cost = (value_per_person / samp_per_person)  + materials
+        per_sample_cost = (value_per_person / samp_per_person) + materials
         fb_spots_auto   = per_sample_cost / 10
     else:
         per_sample_cost = fb_spots_auto = 0
@@ -409,7 +409,7 @@ if tool == "🔀 Split Calculator":
 
     # Final cost using chosen spots
     fb_spots = custom_spots
-    cost_per_spot =  total_value / fb_spots if fb_spots > 0 else 0
+    cost_per_spot = total_value / fb_spots if fb_spots > 0 else 0
 
     value_label = "Each Person Pays" if split_ways > 1 else "Total Value"
     value_sub   = (
@@ -465,7 +465,7 @@ if tool == "🔀 Split Calculator":
 | **FB Spots selected** | **{fb_spots}** |
 | **Cost per spot** | **${cost_per_spot:.2f}** |
         """)
-        st.caption("Formula: (Value per Person ÷ Samples from Share)  = Cost per Sample")
+        st.caption("Formula: (Value per Person ÷ Samples from Share) = Cost per Sample")
         st.caption("Cost per Spot = Cost per Sample ÷ FB Spots")
 
 
