@@ -182,7 +182,7 @@ with st.sidebar:
         options=[
             "🔀 Split Calculator",
             "🌾 Mash Bill Calculator",
-            "🔬 Spirited Tools",
+            "🔬 Split Volume Calculator",
         ],
         index=0,
         label_visibility="collapsed",
@@ -623,13 +623,13 @@ elif tool == "🌾 Mash Bill Calculator":
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TOOL 3 — Spirited Tools (Alcohol Density Predictor)
+# TOOL 3 — Alcohol Density Predictor
 # ══════════════════════════════════════════════════════════════════════════════
-elif tool == "🔬 Spirited Tools":
+elif tool == "🔬 Split Volume Calculator":
 
     st.markdown("""
     <div class="header-banner">
-      <h1>🔬 Spirited Tools</h1>
+      <h1>🔬 Split Volume Calculator</h1>
       <p>Scientific utilities for whiskey analysis and measurement</p>
     </div>
     """, unsafe_allow_html=True)
