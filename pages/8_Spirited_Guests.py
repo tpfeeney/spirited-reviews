@@ -2,8 +2,10 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
+import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 import seaborn as sns
+from scipy import stats
 from utils import add_sidebar_logo, get_data, GUEST_COLS
 
 st.set_page_config(
@@ -342,14 +344,7 @@ if len(selected_rows) > 20:
     st.warning("⚠️ Please select no more than 20 observations.")
     st.stop()
 
-guest_avgs = selected_rows[active_guests].apply(
-    pd.to_numeric, errors='coerce'
-).mean(skipna=True).round(1)
-
-st.subheader("Average Guest Scores for Selected Whiskeys")
-st.table(guest_avgs.rename(index=lambda x: x.capitalize()).to_frame(name="Average Score"))
-st.markdown(f"**Overall Average Across All Guests:** `{guest_avgs.mean():.2f}`")
-
+# ── User score sliders ────────────────────────────────────────────────────────
 st.markdown("### Your Scores")
 user_scores = []
 cols = st.columns(3)
@@ -363,6 +358,44 @@ for i, (idx, row) in enumerate(selected_rows.iterrows()):
         )
         user_scores.append({"name": row["name"], "Reviewer": "you", "Score": user_score})
 
+# ── Average scores table (with user row + mean/median/variance) ───────────────
+guest_scores_df = selected_rows[active_guests].apply(pd.to_numeric, errors='coerce')
+
+summary_stats = []
+for g in active_guests:
+    vals = guest_scores_df[g].dropna()
+    if not vals.empty:
+        summary_stats.append({
+            "Guest":    g.capitalize(),
+            "Mean":     round(vals.mean(), 2),
+            "Median":   round(vals.median(), 2),
+            "Variance": round(vals.var(), 2),
+        })
+
+if user_scores:
+    user_vals = pd.Series([s["Score"] for s in user_scores])
+    summary_stats.append({
+        "Guest":    "You",
+        "Mean":     round(user_vals.mean(), 2),
+        "Median":   round(user_vals.median(), 2),
+        "Variance": round(user_vals.var(), 2),
+    })
+
+st.subheader("Average Guest Scores for Selected Whiskeys")
+stats_df = pd.DataFrame(summary_stats)
+st.dataframe(
+    stats_df,
+    hide_index=True,
+    use_container_width=True,
+    column_config={
+        "Guest":    st.column_config.TextColumn("Guest"),
+        "Mean":     st.column_config.NumberColumn("Mean",     format="%.2f"),
+        "Median":   st.column_config.NumberColumn("Median",   format="%.2f"),
+        "Variance": st.column_config.NumberColumn("Variance", format="%.2f"),
+    }
+)
+
+# ── Box plot comparison ───────────────────────────────────────────────────────
 box_df = selected_rows.reset_index()[["name"] + active_guests].melt(
     id_vars=["name"], var_name="Reviewer", value_name="Score"
 )
@@ -379,29 +412,172 @@ fig = px.box(
     color="Reviewer",
 )
 fig.update_traces(
-    hovertemplate="Reviewer: %{x}<br>Score: %{y}<br>Whiskey: %{customdata[0]}<extra></extra>"
+    hovertemplate="Reviewer: %{x}<br>Score: %{y}<br>Whiskey: %{customdata[0]}<extra></extra>",
+    marker=dict(line=dict(color='#c8640a', width=1)),
 )
-fig.update_layout(yaxis_range=[0, 10], showlegend=False)
+fig.update_layout(
+    yaxis_range=[0, 10],
+    showlegend=False,
+    paper_bgcolor='#1a0a00',
+    plot_bgcolor='#2d1400',
+    font=dict(color='#f5e6d3', family='Source Sans 3'),
+    title_font=dict(color='#ffd699', family='Playfair Display', size=18),
+    xaxis=dict(gridcolor='#3a1800', linecolor='#7a3e00', tickcolor='#f0d5b0', tickfont=dict(color='#f0d5b0')),
+    yaxis=dict(gridcolor='#3a1800', linecolor='#7a3e00', tickcolor='#f0d5b0', tickfont=dict(color='#f0d5b0')),
+)
+amber_colors = ['#c8640a','#f5a944','#7a3e00','#ffd699','#a0522d','#e8922a','#d4956a']
+for i, trace in enumerate(fig.data):
+    trace.marker.color = amber_colors[i % len(amber_colors)]
+    trace.line.color   = amber_colors[i % len(amber_colors)]
 st.plotly_chart(fig, use_container_width=True)
 
-st.subheader("🎯 Your Closest Guest Match")
+# ── Closest guest match + Pearson correlation ─────────────────────────────────
 user_df_lookup = pd.DataFrame(user_scores).set_index("name")["Score"]
 selected_named = selected_rows.set_index("name")
 
-diffs = {}
-for r in active_guests:
-    col_data    = pd.to_numeric(selected_named[r], errors='coerce').dropna()
-    user_common = user_df_lookup.reindex(col_data.index).dropna()
-    if not user_common.empty:
-        diffs[r.capitalize()] = (col_data.reindex(user_common.index) - user_common).abs().mean()
+diffs        = {}
+correlations = {}
 
-if diffs:
+for g in active_guests:
+    col_data        = pd.to_numeric(selected_named[g], errors='coerce').dropna()
+    user_common     = user_df_lookup.reindex(col_data.index).dropna()
+    guest_aligned   = col_data.reindex(user_common.index)
+
+    if not user_common.empty:
+        diffs[g.capitalize()] = (guest_aligned - user_common).abs().mean()
+
+    if len(user_common) >= 3 and user_common.std() > 0 and guest_aligned.std() > 0:
+        r_val, _ = stats.pearsonr(user_common.values, guest_aligned.values)
+        correlations[g.capitalize()] = {"r": round(r_val, 3), "n": len(user_common)}
+    elif len(user_common) >= 1:
+        correlations[g.capitalize()] = {"r": None, "n": len(user_common)}
+
+# ── Composite score ───────────────────────────────────────────────────────────
+guests_with_both = [g for g in diffs if correlations.get(g, {}).get("r") is not None]
+composite = {}
+
+if len(guests_with_both) >= 2:
+    diff_vals = np.array([diffs[g] for g in guests_with_both])
+    r_vals    = np.array([correlations[g]["r"] for g in guests_with_both])
+
+    diff_range = diff_vals.max() - diff_vals.min()
+    diff_norm  = 1 - (diff_vals - diff_vals.min()) / diff_range if diff_range > 0 else np.ones(len(diff_vals))
+    r_norm     = (r_vals + 1) / 2
+
+    composite_scores = (diff_norm + r_norm) / 2
+    for g, score in zip(guests_with_both, composite_scores):
+        composite[g] = round(float(score), 4)
+elif len(guests_with_both) == 1:
+    composite[guests_with_both[0]] = 1.0
+
+if composite:
+    closest = max(composite, key=composite.get)
+elif diffs:
     closest = min(diffs, key=diffs.get)
+else:
+    closest = None
+
+# ── Closest match callout ─────────────────────────────────────────────────────
+st.subheader("🎯 Your Closest Guest Match")
+if closest:
+    closest_corr = correlations.get(closest, {})
+    parts = [f"avg difference: {diffs[closest]:.2f} pts"]
+    if closest_corr.get("r") is not None:
+        parts.append(f"Pearson r = **{closest_corr['r']:.3f}**")
+    if closest in composite:
+        parts.append(f"composite score: **{composite[closest]:.3f}**")
     st.success(
         f"Based on your ratings, you align most closely with **{closest}** "
-        f"(avg difference: {diffs[closest]:.2f} points)."
+        f"({' | '.join(parts)})."
     )
-    diff_df = pd.DataFrame(
-        {"Guest": list(diffs.keys()), "Avg Score Difference": list(diffs.values())}
-    ).sort_values("Avg Score Difference")
-    st.dataframe(diff_df, hide_index=True, use_container_width=True)
+
+# ── Combined summary table ────────────────────────────────────────────────────
+summary_rows = []
+for guest in sorted(set(list(diffs.keys()) + list(correlations.keys()))):
+    row = {"Guest": guest}
+    row["Avg Score Difference"] = round(diffs[guest], 3) if guest in diffs else None
+    corr = correlations.get(guest, {})
+    row["Pearson r"] = corr["r"] if corr.get("r") is not None else None
+    row["n"]         = corr.get("n", None)
+    row["Composite Score"] = composite.get(guest, None)
+    summary_rows.append(row)
+
+summary_df = (
+    pd.DataFrame(summary_rows)
+    .sort_values("Composite Score", ascending=False, na_position="last")
+    .reset_index(drop=True)
+)
+st.dataframe(summary_df, hide_index=True, use_container_width=True)
+
+# ── Pearson bar chart ─────────────────────────────────────────────────────────
+corr_plot_data = [(g, v["r"]) for g, v in correlations.items() if v.get("r") is not None]
+
+if len(corr_plot_data) >= 1:
+    st.markdown("### 📐 Palate Correlation with Guest Reviewers")
+
+    if len(selected_rows) < 3:
+        st.caption(
+            "⚠️ Pearson correlation requires at least 3 whiskeys with scores from both you "
+            "and the reviewer. Select more whiskeys to see correlation results."
+        )
+    else:
+        corr_plot_df = (
+            pd.DataFrame(corr_plot_data, columns=["Guest", "Pearson r"])
+            .sort_values("Pearson r", ascending=True)
+        )
+
+        bar_colors = [
+            "#c8640a" if v >= 0.7
+            else "#f5a944" if v >= 0.4
+            else "#7a3e00" if v >= 0
+            else "#4a1a1a"
+            for v in corr_plot_df["Pearson r"]
+        ]
+
+        fig_corr = go.Figure(go.Bar(
+            x=corr_plot_df["Pearson r"],
+            y=corr_plot_df["Guest"],
+            orientation="h",
+            marker_color=bar_colors,
+            marker_line=dict(color="#c8640a", width=0.5),
+            text=[f"{v:.3f}" for v in corr_plot_df["Pearson r"]],
+            textposition="outside",
+            textfont=dict(color="#ffd699", size=12),
+            hovertemplate="<b>%{y}</b><br>Pearson r: %{x:.3f}<extra></extra>",
+        ))
+        fig_corr.add_vline(x=0, line_color="#f0d5b0", line_width=1, line_dash="dot")
+        fig_corr.update_layout(
+            title=dict(
+                text="Pearson Correlation: Your Scores vs. Each Guest Reviewer",
+                font=dict(color='#ffd699', family='Playfair Display', size=18),
+            ),
+            xaxis=dict(
+                title="Pearson r", range=[-1.1, 1.25],
+                gridcolor='#3a1800', linecolor='#7a3e00',
+                tickcolor='#f0d5b0', tickfont=dict(color='#f0d5b0'),
+                zeroline=False,
+            ),
+            yaxis=dict(
+                gridcolor='#3a1800', linecolor='#7a3e00',
+                tickcolor='#f0d5b0', tickfont=dict(color='#f0d5b0'),
+            ),
+            paper_bgcolor='#1a0a00',
+            plot_bgcolor='#2d1400',
+            font=dict(color='#f5e6d3', family='Source Sans 3'),
+            showlegend=False,
+            margin=dict(l=20, r=80, t=60, b=40),
+            height=max(250, 60 * len(corr_plot_df) + 80),
+        )
+        st.plotly_chart(fig_corr, use_container_width=True)
+
+        st.markdown("""
+        <div style="display:flex; gap:24px; flex-wrap:wrap; margin-top:4px; font-size:0.85rem; color:#d4956a;">
+          <span><span style="color:#c8640a;">■</span> r ≥ 0.7 — Strong agreement</span>
+          <span><span style="color:#f5a944;">■</span> r 0.4–0.7 — Moderate agreement</span>
+          <span><span style="color:#7a3e00;">■</span> r 0–0.4 — Weak agreement</span>
+          <span><span style="color:#4a1a1a;">■</span> r < 0 — Disagreement</span>
+        </div>
+        """, unsafe_allow_html=True)
+else:
+    if len(selected_rows) < 3:
+        st.info("Select at least **3 whiskeys** to compute Pearson correlations with guest reviewers.")
