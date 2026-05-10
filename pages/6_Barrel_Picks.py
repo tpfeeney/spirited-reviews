@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 from utils import add_sidebar_logo
 
 st.set_page_config(
@@ -7,8 +8,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
-
-import streamlit as st
 
 # ── Spirited Style ─────────────────────────────────────────────────────────────
 st.markdown("""
@@ -71,7 +70,6 @@ st.markdown("""
       transition: opacity 0.2s;
   }
   .stButton > button:hover { opacity: 0.88 !important; }
-  /* Metrics */
   [data-testid="stMetric"] {
       background: linear-gradient(135deg, rgba(200,100,10,0.12), rgba(120,60,0,0.18));
       border: 1px solid rgba(200,100,10,0.3);
@@ -80,16 +78,13 @@ st.markdown("""
   }
   [data-testid="stMetricLabel"] { color: #d4956a !important; font-size: 0.8rem !important; }
   [data-testid="stMetricValue"] { color: #ffd699 !important; font-family: 'Playfair Display', serif !important; }
-  /* Dataframes */
   [data-testid="stDataFrame"] { border: 1px solid rgba(200,100,10,0.2) !important; border-radius: 8px; }
-  /* Expander */
   .streamlit-expanderHeader {
       background: rgba(255,220,160,0.06) !important;
       border: 1px solid rgba(200,100,10,0.2) !important;
       border-radius: 8px !important;
       color: #f5a944 !important;
   }
-  /* Info / warning / error boxes */
   .stAlert { border-radius: 8px !important; }
   hr { border-color: rgba(200,100,10,0.2) !important; }
   #MainMenu { visibility: hidden; }
@@ -97,259 +92,247 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-
 add_sidebar_logo()
 
 st.title("🛢️ Barrel Picks")
 st.caption("Our hand-selected single barrel picks — past and future.")
 
-# ── Page toggle (right-aligned using columns) ─────────────────────────────────
-_, toggle_col = st.columns([3, 1])
-with toggle_col:
-    view = st.radio("", ["Upcoming Picks", "Previous Picks" ], index=0, horizontal=False, label_visibility="collapsed")
+# ── Sheet config ───────────────────────────────────────────────────────────────
+SPREADSHEET_ID = "1X4rhHEsj9gWSUfV4SYpuoiaVeEgbecLeqG58XhbeuJE"
 
-st.markdown("---")
+# Maps sheet column headers → internal field names used by render_pick()
+COLUMN_MAP = {
+    "Distillery/Company": "distillery",
+    "Brand":              "brand",
+    "Distillate":         "distillate_info",
+    "Mashbill":           "mashbill",
+    "Proof":              "proof",
+    "Age":                "age",
+    "Pick Name":          "name",
+    "Pick Date":          "pick_date",
+    "Release Date":       "release_date",
+    "Pick Team":          "pick_team",
+    "Location":           "location",
+    "Nose":               "nose",
+    "Palate":             "palate",
+    "Mouthfeel":          "mouthfeel",
+    "Finish":             "finish",
+    "Video":              "video",
+    "Status":             "status",
+    "Details":            "description",
+    "Image File":         "image_file",
+    "Image file":         "image_file",
+}
 
-# ── Data ──────────────────────────────────────────────────────────────────────
+# ── Data loader ────────────────────────────────────────────────────────────────
+@st.cache_data(ttl=300)
+def load_barrel_picks():
+    try:
+        base = f"https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet="
+        dfs = []
+        for sheet_name, tab in [("InProg", "upcoming"), ("Released", "previous")]:
+            try:
+                df = pd.read_csv(base + sheet_name)
+                df.columns = df.columns.str.strip()
+                df.rename(columns={k: v for k, v in COLUMN_MAP.items() if k in df.columns}, inplace=True)
+                df["_tab"] = tab
+                dfs.append(df)
+            except Exception:
+                pass
+        if not dfs:
+            st.error("Could not load any barrel picks tabs.")
+            return pd.DataFrame()
+        combined = pd.concat(dfs, ignore_index=True)
+        combined["status"] = combined["status"].astype(str).str.strip().str.lower()
+        if "name" in combined.columns:
+            combined = combined[combined["name"].astype(str).str.strip().replace("nan", "") != ""]
+        return combined
+    except Exception as e:
+        st.error(f"Could not load barrel picks data: {e}")
+        return pd.DataFrame()
 
-previous_picks = [
-    {
-        "name": "Short Barrel Spirited x Collection",
-        "brand": "Shortbarrel Bourbon",
-        "status": "SOLD OUT",
-        "pick_date": "",
-        "release_date": "",
-        "image_file": "shortb.jpg",
-        "description": "",
-        "proof": "138.2",
-        "age": "8 years",
-        "location": "Distilled in KY, Aged in Atlanta, Georgia",
-        "distillate_info": "OZ Tyler (aka Green River)",
-        "pick_team": "Justin and the Collection crew",
-        "nose": "",
-        "palate": "",
-        "mouthfeel": "",
-        "finish": "",
-    },
-    {
-        "name": "Backbone Stogiestastic Batch",
-        "brand": "",
-        "status": "SOLD OUT",
-        "pick_date": "",
-        "release_date": "",
-        "image_file": "stogie.jpeg",
-        "description": "Aged 72 months in kelvin barrel\nBourbon Fusion:  \n Micro-blend of 4 different barrels - Feb24 (all 21% rye)  \n bbl#1 - Straight bourbon; original barrel date Oct18. \n bbl# 2 - Bourbon finished in Amaro (24 months)  \n bbl# 3 - Bourbon finished in Cognac (15 months)  \n bbl# 4 - Bourbon finished in Apera (15 months)  \n(note: Apera is Australian sherry - similar to PX)",
-        "proof": "120",
-        "age": "",
-        "location": "",
-        "distillate_info": "",
-        "pick_team": "",
-        "nose": "",
-        "palate": "",
-        "mouthfeel": "",
-        "finish": "",
-    },
-    {
-        "name": "Backbone Irish Kelvin",
-        "brand": "",
-        "status": "SOLD OUT",
-        "pick_date": "",
-        "release_date": "",
-        "image_file": "irishkelvin.jpg",
-        "description": "",
-        "proof": "120.9",
-        "age": "7.6 years",
-        "location": "",
-        "distillate_info": "",
-        "pick_team": "",
-        "nose": "",
-        "palate": "",
-        "mouthfeel": "",
-        "finish": "",
-    },
-    {
-        "name": "Founding Spirit",
-        "brand": "",
-        "status": "SOLD OUT",
-        "pick_date": "",
-        "release_date": "",
-        "image_file": "pick_founding_spirit.png",
-        "description": "",
-        "proof": "",
-        "age": "",
-        "location": "",
-        "distillate_info": "MGP",
-        "pick_team": "",
-        "nose": "",
-        "palate": "",
-        "mouthfeel": "",
-        "finish": "",
-    },
-]
 
-upcoming_picks = [
-    # {
-    #     "name": "Four Roses Single Barrel OBSV",
-    #     "brand": "Four Roses",
-    #     "status": "Pending Release",   # e.g. "Selected", "In Production", "Pending Release"
-    #     "pick_date": "January 2025",
-    #     "release_date": "Coming Spring 2025",
-    #     "image_file": "pick_four_roses.png",
-    #     "description": "",
-    #     "proof": "",
-    #     "age": "",
-    #     "location": "",
-    #     "distillate_info": "",
-    #     "pick_team": "",
-    #     "nose": "",
-    #     "palate": "",
-    #     "mouthfeel": "",
-    #     "finish": "",
-    # },
-    {
-        "name": "Peerless Rye",
-        "brand": "Peerless",
-        "status": "Picked",   # e.g. "Selected", "In Production", "Pending Release"
-        "pick_date": "Mar 6 2025",
-        "release_date": "TBD",
-        "image_file": "",
-        "description": "",
-        "proof": "",
-        "age": "",
-        "location": "",
-        "distillate_info": "",
-        "pick_team": "Randy, Norm, Zach, Boggzilla",
-        "nose": "",
-        "palate": "",
-        "mouthfeel": "",
-        "finish": "",
-    },
-
-]
-
-# ── Image loader ──────────────────────────────────────────────────────────────
+# ── Image loader ───────────────────────────────────────────────────────────────
 GITHUB_BASE = "https://github.com/tpfeeney/spirited-reviews/blob/main"
 
 def load_image(filename):
+    if not filename or str(filename).strip() in ("", "nan"):
+        return None
     import requests
     from PIL import Image
     from io import BytesIO
 
-    url = f"{GITHUB_BASE}/{filename}?raw=true"
-    try:
-        resp = requests.get(url, timeout=5)
-        if resp.status_code == 200:
-            return Image.open(BytesIO(resp.content))
-    except Exception:
-        pass
+    # Try the filename as-is, then common extension variants
+    candidates = [filename]
+    if filename.lower().endswith(".jpg"):
+        candidates.append(filename[:-4] + ".jpeg")
+    elif filename.lower().endswith(".jpeg"):
+        candidates.append(filename[:-5] + ".jpg")
+
+    for name in candidates:
+        url = f"{GITHUB_BASE}/{name}?raw=true"
+        try:
+            resp = requests.get(url, timeout=5)
+            if resp.status_code == 200:
+                return Image.open(BytesIO(resp.content))
+        except Exception:
+            pass
     try:
         return Image.open(filename)
     except Exception:
         return None
 
 
-# ── Render a single pick card ─────────────────────────────────────────────────
+# ── Helper: clean cell value ───────────────────────────────────────────────────
+def cell(pick, key):
+    v = str(pick.get(key, "")).strip()
+    return "" if v in ("nan", "None", "none") else v
+
+
+# ── Card renderer ──────────────────────────────────────────────────────────────
 def render_pick(pick):
-    st.markdown(f"### {pick['name']}")
-    st.caption(f"{pick['brand']}")
+    name       = cell(pick, "name")
+    brand      = cell(pick, "brand")
+    distillery = cell(pick, "distillery")
+
+    subtitle = brand
+    if distillery and distillery.lower() != brand.lower():
+        subtitle = f"{brand} — {distillery}" if brand else distillery
+
+    st.markdown(f"### {name}")
+    if subtitle:
+        st.caption(subtitle)
 
     img_col, info_col = st.columns([1, 2])
 
     with img_col:
-        img = load_image(pick["image_file"])
+        img = load_image(cell(pick, "image_file"))
         if img is not None:
             st.image(img, use_container_width=True)
         else:
             st.markdown(
-                "<div style='width:100%;padding:60px 20px;background:#1a1a1a;"
-                "border-radius:8px;text-align:center;color:#888;font-size:14px;'>"
-                "🛢️ Photo<br>coming soon</div>",
+                "<div style='width:100%;padding:60px 20px;"
+                "background:rgba(255,220,160,0.04);"
+                "border:1px solid rgba(200,100,10,0.2);border-radius:8px;"
+                "text-align:center;color:#7a5a3a;font-size:14px;'>"
+                "🛢️<br>Photo coming soon</div>",
                 unsafe_allow_html=True,
             )
 
     with info_col:
 
         # ── Status / Dates ────────────────────────────────────────────────────
-        status       = pick.get("status", "")
-        pick_date    = pick.get("pick_date", "")
-        release_date = pick.get("release_date", "")
+        status       = cell(pick, "status")
+        pick_date    = cell(pick, "pick_date")
+        release_date = cell(pick, "release_date")
+        video        = cell(pick, "video")
 
         if any([status, pick_date, release_date]):
             st.markdown("#### 📋 Pick Info")
-            date_cols = st.columns(3)
-            with date_cols[0]:
+            d1, d2, d3 = st.columns(3)
+            with d1:
                 if status:
-                    status_color = (
-                        "#4caf50" if status.lower() == "released"
-                        else "#ff9800" if "production" in status.lower()
-                        else "#2196f3"
-                    )
+                    color = "#4caf50" if pick.get("_tab") == "upcoming" else "#2196f3"
                     st.markdown(
-                        f"**Status:** <span style='color:{status_color};font-weight:bold;'>{status}</span>",
-                        unsafe_allow_html=True
+                        f"**Status:** <span style='color:{color};font-weight:bold;'>"
+                        f"{status.title()}</span>",
+                        unsafe_allow_html=True,
                     )
-            with date_cols[1]:
+            with d2:
                 if pick_date:
                     st.markdown(f"**🗓️ Pick Date:** {pick_date}")
-            with date_cols[2]:
+            with d3:
                 if release_date:
                     st.markdown(f"**🚀 Release Date:** {release_date}")
 
         # ── Barrel Details ────────────────────────────────────────────────────
-        proof           = pick.get("proof", "")
-        age             = pick.get("age", "")
-        location        = pick.get("location", "")
-        distillate_info = pick.get("distillate_info", "")
+        proof           = cell(pick, "proof")
+        age             = cell(pick, "age")
+        location        = cell(pick, "location")
+        distillate_info = cell(pick, "distillate_info")
+        mashbill        = cell(pick, "mashbill")
 
-        if any([proof, age, location, distillate_info]):
+        if any([proof, age, location, distillate_info, mashbill]):
             st.markdown("#### 🛢️ Barrel Details")
-            detail_cols = st.columns(2)
-            with detail_cols[0]:
-                if proof:
-                    st.markdown(f"**🔢 Proof:** {proof}")
-                if age:
-                    st.markdown(f"**📅 Age:** {age}")
-            with detail_cols[1]:
-                if location:
-                    st.markdown(f"**📍 Location:** {location}")
-                if distillate_info:
-                    st.markdown(f"**🌾 Distillate:** {distillate_info}")
+            b1, b2 = st.columns(2)
+            with b1:
+                if proof:        st.markdown(f"**🔢 Proof:** {proof}")
+                if age:          st.markdown(f"**📅 Age:** {age}")
+                if mashbill:     st.markdown(f"**🌾 Mashbill:** {mashbill}")
+            with b2:
+                if location:        st.markdown(f"**📍 Location:** {location}")
+                if distillate_info: st.markdown(f"**🏭 Distillate:** {distillate_info}")
 
-        # ── Description ───────────────────────────────────────────────────────
-        if pick.get("description"):
-            st.markdown("#### 📝 Description")
-            st.markdown(pick["description"])
+        # ── Details / Description ─────────────────────────────────────────────
+        description = cell(pick, "description")
+        if description:
+            st.markdown("#### 📝 Details")
+            st.markdown(description)
 
         # ── Pick Team ─────────────────────────────────────────────────────────
-        if pick.get("pick_team"):
+        pick_team = cell(pick, "pick_team")
+        if pick_team:
             st.markdown("#### 👥 Pick Team")
-            st.markdown(pick["pick_team"])
+            st.markdown(pick_team)
 
         # ── Tasting Notes ─────────────────────────────────────────────────────
-        st.markdown("#### 🍶 Tasting Notes")
-        tasting_cols = st.columns(2)
-        with tasting_cols[0]:
-            st.markdown(f"**👃 Nose**  \n{pick.get('nose', '—') or '—'}")
-            st.markdown(f"**👄 Palate**  \n{pick.get('palate', '—') or '—'}")
-        with tasting_cols[1]:
-            st.markdown(f"**💧 Mouthfeel**  \n{pick.get('mouthfeel', '—') or '—'}")
-            st.markdown(f"**🔥 Finish**  \n{pick.get('finish', '—') or '—'}")
+        nose      = cell(pick, "nose")
+        palate    = cell(pick, "palate")
+        mouthfeel = cell(pick, "mouthfeel")
+        finish    = cell(pick, "finish")
+
+        if any([nose, palate, mouthfeel, finish]):
+            st.markdown("#### 🍶 Tasting Notes")
+            t1, t2 = st.columns(2)
+            with t1:
+                st.markdown(f"**👃 Nose**  \n{nose or '—'}")
+                st.markdown(f"**👄 Palate**  \n{palate or '—'}")
+            with t2:
+                st.markdown(f"**💧 Mouthfeel**  \n{mouthfeel or '—'}")
+                st.markdown(f"**🔥 Finish**  \n{finish or '—'}")
+
+        # ── Video link ────────────────────────────────────────────────────────
+        if video and video.startswith("http"):
+            st.markdown("#### 🎬 Video Review")
+            st.markdown(f"[▶ Watch Review]({video})")
 
     st.markdown("---")
 
 
-# ── Render the selected view ──────────────────────────────────────────────────
-if view == "Previous Picks":
-    if not previous_picks:
-        st.info("No previous picks yet — check back soon!")
-    else:
-        for pick in previous_picks:
-            with st.expander(f"🛢️ {pick['name']}", expanded=False):
-                render_pick(pick)
+# ── Load & split data ──────────────────────────────────────────────────────────
+df_all = load_barrel_picks()
 
-else:
-    if not upcoming_picks:
+# Split based on which sheet tab the row came from — no hardcoded status values
+upcoming_df = df_all[df_all["_tab"] == "upcoming"].copy() if not df_all.empty else pd.DataFrame()
+previous_df = df_all[df_all["_tab"] == "previous"].copy() if not df_all.empty else pd.DataFrame()
+
+# ── Sidebar ────────────────────────────────────────────────────────────────────
+if st.sidebar.button("🔄 Refresh Data"):
+    st.cache_data.clear()
+    st.rerun()
+
+# ── Page toggle ────────────────────────────────────────────────────────────────
+_, toggle_col = st.columns([3, 1])
+with toggle_col:
+    view = st.radio(
+        "", ["Upcoming Picks", "Previous Picks"],
+        index=0, horizontal=False, label_visibility="collapsed",
+    )
+
+st.markdown("---")
+
+# ── Render ─────────────────────────────────────────────────────────────────────
+if view == "Upcoming Picks":
+    if upcoming_df.empty:
         st.info("No upcoming picks announced yet — stay tuned!")
     else:
-        for pick in upcoming_picks:
-            render_pick(pick)
+        for _, row in upcoming_df.iterrows():
+            render_pick(row.to_dict())
+
+else:
+    if previous_df.empty:
+        st.info("No previous picks yet — check back soon!")
+    else:
+        for _, row in previous_df.iterrows():
+            with st.expander(f"🛢️ {row.get('name', 'Pick')}", expanded=False):
+                render_pick(row.to_dict())
