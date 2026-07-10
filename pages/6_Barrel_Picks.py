@@ -195,13 +195,24 @@ def render_pick(pick):
     brand      = cell(pick, "brand")
     distillery = cell(pick, "distillery")
 
-    subtitle = brand
-    if distillery and distillery.lower() != brand.lower():
-        subtitle = f"{brand} — {distillery}" if brand else distillery
+    # Brand/Distillery as main title, Pick Name as subtitle
+    if brand and distillery and brand.lower() != distillery.lower():
+        title = f"{brand} — {distillery}"
+    elif brand:
+        title = brand
+    elif distillery:
+        title = distillery
+    else:
+        title = name  # fallback if no brand/distillery
 
-    st.markdown(f"### {name}")
-    if subtitle:
-        st.caption(subtitle)
+    st.markdown(f"### {title}")
+    if name and name.lower() != title.lower():
+      st.markdown(
+          f"<p style='font-size:1.1rem; color:#f5a944; font-weight:500; margin-top:-5px;'>"
+          f"🥃 {name}</p>",
+          unsafe_allow_html=True,
+      )
+    
 
     img_col, info_col = st.columns([1, 2])
 
