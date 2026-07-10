@@ -124,6 +124,7 @@ COLUMN_MAP = {
     "Image file":         "image_file",
 }
 
+
 # ── Data loader ────────────────────────────────────────────────────────────────
 @st.cache_data(ttl=300)
 def load_barrel_picks():
@@ -154,6 +155,7 @@ def load_barrel_picks():
 
 # ── Image loader ───────────────────────────────────────────────────────────────
 GITHUB_BASE = "https://github.com/tpfeeney/spirited-reviews/blob/main"
+
 
 def load_image(filename):
     if not filename or str(filename).strip() in ("", "nan"):
@@ -191,8 +193,8 @@ def cell(pick, key):
 
 # ── Card renderer ──────────────────────────────────────────────────────────────
 def render_pick(pick):
-    name       = cell(pick, "name")
-    brand      = cell(pick, "brand")
+    name = cell(pick, "name")
+    brand = cell(pick, "brand")
     distillery = cell(pick, "distillery")
 
     # Brand/Distillery as main title, Pick Name as subtitle
@@ -207,12 +209,11 @@ def render_pick(pick):
 
     st.markdown(f"### {title}")
     if name and name.lower() != title.lower():
-      st.markdown(
-          f"<p style='font-size:1.1rem; color:#f5a944; font-weight:500; margin-top:-5px;'>"
-          f"🥃 {name}</p>",
-          unsafe_allow_html=True,
-      )
-    
+        st.markdown(
+            f"<p style='font-size:1.1rem; color:#f5a944; font-weight:500; margin-top:-5px;'>"
+            f"🥃 {name}</p>",
+            unsafe_allow_html=True,
+        )
 
     img_col, info_col = st.columns([1, 2])
 
@@ -233,17 +234,22 @@ def render_pick(pick):
     with info_col:
 
         # ── Status / Dates ────────────────────────────────────────────────────
-        status       = cell(pick, "status")
-        pick_date    = cell(pick, "pick_date")
+        status = cell(pick, "status")
+        pick_date = cell(pick, "pick_date")
         release_date = cell(pick, "release_date")
-        video        = cell(pick, "video")
+        video = cell(pick, "video")
 
         if any([status, pick_date, release_date]):
             st.markdown("#### 📋 Pick Info")
             d1, d2, d3 = st.columns(3)
             with d1:
                 if status:
-                    color = "#4caf50" if pick.get("_tab") == "upcoming" else "#2196f3"
+                    if status.lower() == "picked":
+                        color = "#4caf50"  # yellow
+                    elif status.lower() == "pending" or pick.get("_tab") == "upcoming":
+                        color = "#ffcc00"  # yellow
+                    else:
+                        color = "#ffcc00"  # green
                     st.markdown(
                         f"**Status:** <span style='color:{color};font-weight:bold;'>"
                         f"{status.title()}</span>",
@@ -257,22 +263,27 @@ def render_pick(pick):
                     st.markdown(f"**🚀 Release Date:** {release_date}")
 
         # ── Barrel Details ────────────────────────────────────────────────────
-        proof           = cell(pick, "proof")
-        age             = cell(pick, "age")
-        location        = cell(pick, "location")
+        proof = cell(pick, "proof")
+        age = cell(pick, "age")
+        location = cell(pick, "location")
         distillate_info = cell(pick, "distillate_info")
-        mashbill        = cell(pick, "mashbill")
+        mashbill = cell(pick, "mashbill")
 
         if any([proof, age, location, distillate_info, mashbill]):
             st.markdown("#### 🛢️ Barrel Details")
             b1, b2 = st.columns(2)
             with b1:
-                if proof:        st.markdown(f"**🔢 Proof:** {proof}")
-                if age:          st.markdown(f"**📅 Age:** {age}")
-                if mashbill:     st.markdown(f"**🌾 Mashbill:** {mashbill}")
+                if proof:
+                    st.markdown(f"**🔢 Proof:** {proof}")
+                if age:
+                    st.markdown(f"**📅 Age:** {age}")
+                if mashbill:
+                    st.markdown(f"**🌾 Mashbill:** {mashbill}")
             with b2:
-                if location:        st.markdown(f"**📍 Location:** {location}")
-                if distillate_info: st.markdown(f"**🏭 Distillate:** {distillate_info}")
+                if location:
+                    st.markdown(f"**📍 Location:** {location}")
+                if distillate_info:
+                    st.markdown(f"**🏭 Distillate:** {distillate_info}")
 
         # ── Details / Description ─────────────────────────────────────────────
         description = cell(pick, "description")
@@ -287,10 +298,10 @@ def render_pick(pick):
             st.markdown(pick_team)
 
         # ── Tasting Notes ─────────────────────────────────────────────────────
-        nose      = cell(pick, "nose")
-        palate    = cell(pick, "palate")
+        nose = cell(pick, "nose")
+        palate = cell(pick, "palate")
         mouthfeel = cell(pick, "mouthfeel")
-        finish    = cell(pick, "finish")
+        finish = cell(pick, "finish")
 
         if any([nose, palate, mouthfeel, finish]):
             st.markdown("#### 🍶 Tasting Notes")
