@@ -1,0 +1,8 @@
+name: Label Sheet
+category: Supplies
+store: UPS
+buy_url: "https://www.ups.com/osa/browse?loc=en_US&category=003"
+image_file: merch_items/images/label_sheet.png
+description: >
+  Labels for using with a a regular printer. Importantly these are free with UPS.
+order: 3

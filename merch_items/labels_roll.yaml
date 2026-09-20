@@ -1,0 +1,8 @@
+name: Label Roll
+category: Supplies
+store: UPS
+buy_url: "https://www.ups.com/osa/browse?loc=en_US&category=003"
+image_file: merch_items/images/label_roll.png
+description: >
+  Labels for using with a thermal label printer like here [Nelko Thermal Label Printer](#merch-Label-printer)
+order: 3
